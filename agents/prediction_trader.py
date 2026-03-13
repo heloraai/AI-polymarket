@@ -111,6 +111,7 @@ class PredictionTraderAgent:
             direction=direction,
             amount=amount,
             probability_at_trade=market.yes_probability,
+            confidence=data.get("confidence", 0.5),
             reasoning=data.get("reasoning", ""),
         )
 

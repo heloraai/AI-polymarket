@@ -1,4 +1,8 @@
-"""预测市场数据模型"""
+"""预测市场数据模型 — Agent 对战版
+
+核心概念：多个 AI Agent 在同一个预测市场里互相博弈。
+市场价格不是预设的，而是由 Agent 的交易行为决定的。
+"""
 
 from dataclasses import dataclass, field
 from datetime import datetime
@@ -21,17 +25,16 @@ class TradeDirection(Enum):
 class PredictionMarket:
     """一个预测市场"""
     id: str
-    title: str                          # 预测命题，如 "2026年暑期档票房冠军是否超过50亿？"
-    description: str                    # 详细描述
+    title: str                          # 预测命题
+    description: str
     source_question_id: str             # 来源知乎问题 ID
-    source_question_title: str          # 来源知乎问题标题
-    category: str                       # 分类：科技/娱乐/政治/经济
+    source_question_title: str
+    category: str
     created_at: datetime = field(default_factory=datetime.now)
-    resolution_date: datetime | None = None  # 预计结算日期
+    resolution_date: datetime | None = None
     status: MarketStatus = MarketStatus.OPEN
-    yes_probability: float = 0.5        # 当前 YES 概率
-    total_volume: float = 0.0           # 总交易量
-    zhihu_sentiment_score: float = 0.0  # 知乎舆情分数 (-1 到 1)
+    yes_probability: float = 0.5        # 当前 YES 概率（由交易驱动）
+    total_volume: float = 0.0
 
 
 @dataclass
@@ -39,11 +42,12 @@ class Trade:
     """一笔交易"""
     id: str
     market_id: str
-    agent_name: str                     # 哪个 Agent 下的单
+    agent_name: str
     direction: TradeDirection
-    amount: float                       # 下注金额（虚拟积分）
-    probability_at_trade: float         # 交易时的概率
-    reasoning: str                      # AI 的推理过程
+    amount: float
+    probability_at_trade: float
+    confidence: float                   # Agent 对自己判断的信心
+    reasoning: str
     timestamp: datetime = field(default_factory=datetime.now)
 
 
@@ -51,10 +55,12 @@ class Trade:
 class AgentPortfolio:
     """Agent 的持仓和绩效"""
     agent_name: str
-    balance: float = 1000.0             # 初始虚拟积分
+    personality: str = ""               # 性格标签
+    balance: float = 1000.0
     total_trades: int = 0
     winning_trades: int = 0
-    positions: dict = field(default_factory=dict)  # market_id -> (direction, amount)
+    pnl: float = 0.0                    # 累计盈亏
+    positions: dict = field(default_factory=dict)  # market_id -> list[Trade]
 
     @property
     def win_rate(self) -> float:
@@ -69,11 +75,20 @@ class SentimentReport:
     question_id: str
     question_title: str
     total_answers_analyzed: int
-    positive_ratio: float               # 正面观点比例
-    negative_ratio: float               # 负面观点比例
-    neutral_ratio: float                # 中性观点比例
-    confidence: float                   # 分析置信度
-    key_arguments_for: list[str] = field(default_factory=list)   # 正方核心论据
-    key_arguments_against: list[str] = field(default_factory=list)  # 反方核心论据
-    top_expert_opinions: list[str] = field(default_factory=list)   # 高可信度答主观点
-    sentiment_trend: str = "stable"     # rising / falling / stable
+    positive_ratio: float
+    negative_ratio: float
+    neutral_ratio: float
+    confidence: float
+    key_arguments_for: list[str] = field(default_factory=list)
+    key_arguments_against: list[str] = field(default_factory=list)
+    top_expert_opinions: list[str] = field(default_factory=list)
+    sentiment_trend: str = "stable"
+
+
+@dataclass
+class ArenaResult:
+    """一轮竞技场的结果"""
+    market: PredictionMarket
+    trades: list[Trade]
+    leaderboard: list[AgentPortfolio]   # 按盈亏排序
+    price_history: list[float]          # 概率变化轨迹
