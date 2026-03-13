@@ -1,8 +1,8 @@
-"""裁判 Agent — 评判辩论胜负
+"""裁判 Agent — 评判多选项辩论胜负
 
 裁判综合以下维度做出裁决：
-1. 论据质量：哪一方的论据更有数据支撑、逻辑更严密？
-2. 反驳效果：哪一方更有效地拆解了对方的论点？
+1. 论据质量：哪个立场的论据更有数据支撑、逻辑更严密？
+2. 反驳效果：哪个立场更有效地拆解了对手的论点？
 3. 说服力：辩论过程中是否有 Agent 被说服改变立场？
 4. 证据强度：如果有可验证的事实证据，以证据为准
 
@@ -15,7 +15,7 @@ import anthropic
 
 from debate.models import (
     AgentBet, DebateMessage, DebateTopic,
-    Position, PositionChange,
+    PositionChange,
 )
 
 
@@ -23,15 +23,15 @@ JUDGE_SYSTEM_PROMPT = """\
 你是一位公正的辩论裁判。你需要根据辩论内容做出裁决。
 
 你的评判标准（按权重排序）：
-1. **证据强度 (35%)**：哪一方引用了更可靠的数据、事实或专家观点？
-2. **逻辑严密性 (25%)**：哪一方的推理链更完整、更少逻辑漏洞？
-3. **反驳有效性 (20%)**：哪一方更成功地拆解了对手的核心论点？
-4. **说服效果 (20%)**：辩论过程中的立场变化反映了哪一方更有说服力？
+1. **证据强度 (35%)**：哪个立场引用了更可靠的数据、事实或专家观点？
+2. **逻辑严密性 (25%)**：哪个立场的推理链更完整、更少逻辑漏洞？
+3. **反驳有效性 (20%)**：哪个立场更成功地拆解了对手的核心论点？
+4. **说服效果 (20%)**：辩论过程中的立场变化反映了哪个立场更有说服力？
 
 注意：
-- 你必须保持绝对中立，不受 Agent 数量多少的影响（不是少数服从多数）
+- 你必须保持绝对中立，不受任何立场人数多少的影响
 - 重点看论据质量，而非声音大小
-- 如果双方实力相当，可以参考立场变化作为 tiebreaker
+- 如果多个立场实力相当，可以参考立场变化作为 tiebreaker
 - 你的裁决将决定积分的分配，请慎重
 
 你必须只输出 JSON。
@@ -53,8 +53,12 @@ class JudgeAgent:
     ) -> dict:
         """Evaluate the debate and declare a winner."""
 
-        # Format debate for judge
-        debate_text = self._format_full_debate(bets, messages, position_changes)
+        debate_text = self._format_full_debate(topic, bets, messages, position_changes)
+        options_json = ", ".join(f'"{opt.key}"' for opt in topic.options)
+        scores_template = "{\n" + ",\n".join(
+            f'    "{opt.key}": {{"label": "{opt.label}", "evidence": 0, "logic": 0, "rebuttal": 0, "persuasion": 0, "total": 0}}'
+            for opt in topic.options
+        ) + "\n  }"
 
         prompt = f"""\
 辩题：「{topic.title}」
@@ -66,28 +70,14 @@ class JudgeAgent:
 {debate_text}
 ===== 辩论结束 =====
 
-请根据你的评判标准，做出裁决。
+请根据你的评判标准，从以下立场中选出胜出者：
+{chr(10).join(f'  - [{opt.key}] {opt.label}' for opt in topic.options)}
 
 输出 JSON：
 {{
-  "winning_position": "YES" 或 "NO",
+  "winning_position": {options_json} 中选一个,
   "method": "judge_ruling",
-  "scores": {{
-    "YES": {{
-      "evidence": 0-10,
-      "logic": 0-10,
-      "rebuttal": 0-10,
-      "persuasion": 0-10,
-      "total": 0-40
-    }},
-    "NO": {{
-      "evidence": 0-10,
-      "logic": 0-10,
-      "rebuttal": 0-10,
-      "persuasion": 0-10,
-      "total": 0-40
-    }}
-  }},
+  "scores": {scores_template},
   "reasoning": "你的裁决理由（200字以内）",
   "mvp": "表现最好的 Agent 名字",
   "highlights": ["最精彩的 2-3 个辩论瞬间"]
@@ -109,11 +99,13 @@ class JudgeAgent:
         except Exception as e:
             print(f"[JudgeAgent] Error: {e}")
 
-        # Fallback: majority wins
-        yes_count = sum(1 for b in bets if b.position == Position.YES)
-        no_count = sum(1 for b in bets if b.position == Position.NO)
+        # Fallback: most popular option wins
+        counts: dict[str, int] = {}
+        for b in bets:
+            counts[b.position] = counts.get(b.position, 0) + 1
+        winning = max(counts, key=counts.get) if counts else topic.options[0].key
         return {
-            "winning_position": "YES" if yes_count >= no_count else "NO",
+            "winning_position": winning,
             "method": "majority_fallback",
             "reasoning": "裁判出现技术故障，采用多数表决。",
             "scores": {},
@@ -123,6 +115,7 @@ class JudgeAgent:
 
     def _format_full_debate(
         self,
+        topic: DebateTopic,
         bets: list[AgentBet],
         messages: list[DebateMessage],
         position_changes: list[PositionChange],
@@ -132,10 +125,9 @@ class JudgeAgent:
         # Bets summary
         lines.append("【下注情况】")
         for bet in bets:
-            side = "支持(YES)" if bet.position == Position.YES else "反对(NO)"
             lines.append(
-                f"  {bet.agent_emoji} {bet.agent_name}：{side} "
-                f"| 赌注 {bet.stake} 积分 | 信心 {bet.confidence:.0%}"
+                f"  {bet.agent_emoji} {bet.agent_name}：{bet.position_label} "
+                f"| 赌注 {bet.stake:.0f}分 | 信心 {bet.confidence:.0%}"
             )
         lines.append("")
 
@@ -152,10 +144,11 @@ class JudgeAgent:
                 if current_phase in phase_names:
                     lines.append(phase_names[current_phase])
 
-            side = "YES" if msg.position == Position.YES else "NO"
             target = f" → @{msg.target_agent}" if msg.target_agent else ""
             tactics = f" [{', '.join(msg.persuasion_tactics)}]" if msg.persuasion_tactics else ""
-            lines.append(f"  {msg.agent_emoji} {msg.agent_name}({side}){target}：{msg.content}{tactics}")
+            lines.append(
+                f"  {msg.agent_emoji} {msg.agent_name}({msg.position_label}){target}：{msg.content}{tactics}"
+            )
         lines.append("")
 
         # Position changes
@@ -163,8 +156,8 @@ class JudgeAgent:
             lines.append("【立场变化】")
             for change in position_changes:
                 lines.append(
-                    f"  {change.agent_emoji} {change.agent_name}：{change.old_position.value} → "
-                    f"{change.new_position.value}（原因：{change.reasoning}）"
+                    f"  {change.agent_emoji} {change.agent_name}：{change.old_label} → "
+                    f"{change.new_label}（原因：{change.reasoning}）"
                 )
                 if change.influenced_by:
                     lines.append(f"    被 {change.influenced_by} 说服")

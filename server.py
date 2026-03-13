@@ -1,18 +1,11 @@
 """知乎观点擂台 — FastAPI 服务器
 
-API:
-  GET  /                    → 主页面
-  GET  /api/topics          → 获取可用话题列表
-  POST /api/debate/start    → 开始一场新辩论
-  GET  /api/debate/{id}     → 获取辩论状态
-  GET  /api/leaderboard     → 全局排行榜
-  WS   /ws/debate/{id}      → 实时辩论事件流
+Polymarket 风格的 AI Agent 辩论竞技场。
+多选项下注 + 实时辩论 + WebSocket 推送。
 """
 
 import asyncio
-import json
 import uuid
-from datetime import datetime
 from pathlib import Path
 
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
@@ -21,23 +14,21 @@ from fastapi.staticfiles import StaticFiles
 
 from config import ANTHROPIC_API_KEY
 from agents.personalities import ALL_PERSONALITIES
-from debate.models import DebateEvent, DebatePhase, DebateTopic
+from debate.models import DebateEvent, DebateTopic, PositionOption
 from debate.room import DebateRoom
 
-app = FastAPI(title="知乎观点擂台", version="1.0.0")
+app = FastAPI(title="知乎观点擂台", version="2.0.0")
 
-# Serve static files
 static_dir = Path(__file__).parent / "static"
 static_dir.mkdir(exist_ok=True)
 app.mount("/static", StaticFiles(directory=str(static_dir)), name="static")
 
 # ── State ─────────────────────────────────────────────
-# In-memory state (for hackathon demo; production would use DB)
 active_debates: dict[str, DebateRoom] = {}
 debate_results: dict[str, dict] = {}
 global_leaderboard: dict[str, dict] = {}
+ws_connections: dict[str, list[WebSocket]] = {}
 
-# Initialize leaderboard
 for p in ALL_PERSONALITIES:
     global_leaderboard[p.name] = {
         "name": p.name,
@@ -47,70 +38,93 @@ for p in ALL_PERSONALITIES:
         "wins": 0,
         "losses": 0,
         "debates": 0,
-        "persuasions_caused": 0,  # Times this agent changed others' minds
-        "times_persuaded": 0,     # Times this agent was persuaded
+        "persuasions_caused": 0,
+        "times_persuaded": 0,
     }
 
-# WebSocket connections per debate
-ws_connections: dict[str, list[WebSocket]] = {}
+# ── Multi-Option Topics (Polymarket-style) ────────────
 
-# ── Zhihu Topics (stubs until real API tomorrow) ──────
+OPTION_COLORS = ["#4ecdc4", "#ff6b6b", "#ffd93d", "#6c5ce7", "#a8e6cf", "#ff8a5c"]
 
 STUB_TOPICS = [
     DebateTopic(
-        title="AI 是否会在 2027 年前取代大部分程序员的工作？",
+        title="AI 编程 Agent 将如何改变程序员的工作？",
         category="科技",
         context=(
-            "近期 Claude、GPT 等大模型展示了强大的代码能力，"
-            "Devin 等 AI 编程 Agent 引发热议。知乎上关于'程序员是否会失业'的讨论持续升温。"
-            "支持方认为 AI 编程能力指数增长，重复性代码工作将被替代；"
-            "反对方认为软件工程远不止写代码，架构设计和需求理解仍需人类。"
+            "Devin、Claude Code、Cursor 等 AI 编程工具引发热议。"
+            "知乎上关于'程序员是否会失业'的讨论持续升温。"
+            "各方观点激烈碰撞。"
         ),
         hot_score=98.5,
+        options=[
+            PositionOption(key="replace", label="大规模取代", description="3年内大部分初中级程序员工作将被AI替代", color="#ff6b6b"),
+            PositionOption(key="augment", label="增强而非取代", description="AI成为超级工具，程序员效率10x但不会失业", color="#4ecdc4"),
+            PositionOption(key="split", label="两极分化", description="顶尖程序员更强，普通程序员被淘汰", color="#ffd93d"),
+            PositionOption(key="bubble", label="AI泡沫论", description="当前AI能力被高估，程序员工作本质不变", color="#6c5ce7"),
+        ],
     ),
     DebateTopic(
-        title="新能源车是否已经全面超越燃油车？",
+        title="中国新能源车的全球霸主地位能维持多久？",
         category="汽车",
         context=(
             "2025年中国新能源汽车渗透率突破50%，比亚迪全球销量超越丰田。"
-            "知乎上关于'电车vs油车'的讨论激烈。"
-            "支持方强调性价比、智驾能力、环保优势；"
-            "反对方指出续航焦虑、充电基础设施、保值率等痛点依然存在。"
+            "但欧美关税壁垒加剧，丰田固态电池即将量产。"
+            "知乎汽车区讨论热烈。"
         ),
         hot_score=92.3,
+        options=[
+            PositionOption(key="decade", label="至少10年", description="技术+供应链+规模优势形成护城河", color="#4ecdc4"),
+            PositionOption(key="peak", label="已达顶峰", description="关税+固态电池+品牌力不足将逆转局势", color="#ff6b6b"),
+            PositionOption(key="domestic", label="墙内开花", description="国内称霸但出海受阻，形成割据局面", color="#ffd93d"),
+            PositionOption(key="leapfrog", label="被跨越", description="下一代技术(氢能/固态)将重新洗牌", color="#6c5ce7"),
+        ],
     ),
     DebateTopic(
-        title="年轻人'不婚不育'是理性选择还是社会问题？",
+        title="年轻人'不婚不育'的根本原因是什么？",
         category="社会",
         context=(
-            "中国人口连续多年负增长，2025年出生人口创历史新低。"
-            "知乎上关于年轻人选择不婚不育的讨论引发上万条回答。"
-            "支持方认为这是个人自由和经济理性的体现；"
-            "反对方担忧人口结构、养老体系和社会活力受到威胁。"
+            "中国人口连续多年负增长。知乎上万条回答探讨年轻人不婚不育现象。"
+            "经济压力、价值观变迁、社会制度、个人自由等角度激烈碰撞。"
         ),
         hot_score=96.1,
+        options=[
+            PositionOption(key="economic", label="经济压力", description="房价+教育+医疗成本让年轻人生不起", color="#ff6b6b"),
+            PositionOption(key="values", label="价值观进化", description="个体意识觉醒，婚育不再是人生必选项", color="#4ecdc4"),
+            PositionOption(key="system", label="制度缺陷", description="社会保障不足+性别不平等+职场歧视", color="#ffd93d"),
+            PositionOption(key="global", label="全球趋势", description="发达社会的普遍现象，与中国特殊性无关", color="#6c5ce7"),
+        ],
     ),
     DebateTopic(
-        title="中国高校是否应该大规模取消文科专业？",
-        category="教育",
-        context=(
-            "多所高校宣布缩减或取消部分文科专业，引发'文科无用论'讨论。"
-            "知乎上关于文理科价值的辩论持续数月。"
-            "支持方认为应聚焦理工科培养实用人才；"
-            "反对方认为人文素养是社会的根基，不能用'有用'衡量。"
-        ),
-        hot_score=88.7,
-    ),
-    DebateTopic(
-        title="短视频是否正在摧毁年轻人的深度思考能力？",
+        title="短视频是在摧毁还是民主化知识传播？",
         category="文化",
         context=(
             "抖音日活超过7亿，人均使用时长超过2小时。"
             "知乎上关于短视频对认知能力影响的讨论引发广泛关注。"
-            "支持方引用脑科学研究指出注意力碎片化的危害；"
-            "反对方认为这是信息民主化，不应精英主义地否定。"
+            "有人说碎片化毁灭深度思考，有人说知识从未如此平等可得。"
         ),
         hot_score=91.4,
+        options=[
+            PositionOption(key="destroy", label="认知毒药", description="碎片化摧毁注意力和深度思考能力", color="#ff6b6b"),
+            PositionOption(key="democratize", label="知识民主化", description="打破信息垄断，让知识触达更多人", color="#4ecdc4"),
+            PositionOption(key="both", label="双刃剑", description="取决于使用方式，工具本身无善恶", color="#ffd93d"),
+            PositionOption(key="evolve", label="认知进化", description="人类大脑正在适应新的信息处理模式", color="#6c5ce7"),
+        ],
+    ),
+    DebateTopic(
+        title="大模型的'涌现能力'是真的突破还是统计幻觉？",
+        category="AI",
+        context=(
+            "GPT-4、Claude 等大模型展现出似乎超越训练数据的推理能力。"
+            "学界对'涌现'(emergence)是否真实存在争论不断。"
+            "知乎 AI 区关于这个话题的讨论涉及哲学、认知科学和工程实践。"
+        ),
+        hot_score=89.2,
+        options=[
+            PositionOption(key="real", label="真正涌现", description="规模突破临界点产生了质变，是真正的智能萌芽", color="#4ecdc4"),
+            PositionOption(key="illusion", label="统计幻觉", description="只是超大规模模式匹配，本质上是随机鹦鹉", color="#ff6b6b"),
+            PositionOption(key="partial", label="能力真实但不是涌现", description="能力是连续提升的，'涌现'只是度量方式的产物", color="#ffd93d"),
+            PositionOption(key="unknowable", label="不可知论", description="我们目前的理论框架不足以回答这个问题", color="#6c5ce7"),
+        ],
     ),
 ]
 
@@ -119,25 +133,20 @@ STUB_TOPICS = [
 
 @app.get("/", response_class=HTMLResponse)
 async def index():
-    """Serve the main page."""
     html_path = static_dir / "index.html"
     return HTMLResponse(content=html_path.read_text(encoding="utf-8"))
 
 
 @app.get("/api/topics")
 async def get_topics():
-    """Get available debate topics."""
-    # TODO: Replace with real Zhihu API when available
     return {
         "topics": [t.model_dump() for t in STUB_TOPICS],
-        "source": "stub",  # Will change to "zhihu" when API is ready
+        "source": "stub",
     }
 
 
 @app.post("/api/debate/start")
 async def start_debate(topic_id: str = "", topic_index: int = 0):
-    """Start a new debate on a topic."""
-    # Find topic
     if topic_id:
         topic = next((t for t in STUB_TOPICS if t.id == topic_id), None)
     elif 0 <= topic_index < len(STUB_TOPICS):
@@ -148,17 +157,14 @@ async def start_debate(topic_id: str = "", topic_index: int = 0):
     if topic is None:
         return {"error": "Topic not found"}
 
-    # Create debate room
     debate_id = uuid.uuid4().hex[:8]
     room = DebateRoom(
         topic=topic,
         personalities=ALL_PERSONALITIES,
         anthropic_api_key=ANTHROPIC_API_KEY,
-        initial_stake=100.0,
+        base_stake=100.0,
     )
     active_debates[debate_id] = room
-
-    # Run debate in background
     asyncio.create_task(_run_debate(debate_id, room))
 
     return {
@@ -173,27 +179,22 @@ async def start_debate(topic_id: str = "", topic_index: int = 0):
 
 @app.get("/api/debate/{debate_id}")
 async def get_debate(debate_id: str):
-    """Get current debate state."""
     if debate_id in debate_results:
         return {"status": "completed", "result": debate_results[debate_id]}
-
     room = active_debates.get(debate_id)
     if room is None:
         return {"status": "not_found"}
-
     return {
         "status": "in_progress",
         "phase": room.phase.value,
         "topic": room.topic.model_dump(),
         "bets": [b.model_dump() for b in room.bets],
         "messages": [m.model_dump() for m in room.messages],
-        "events_count": len(room.events),
     }
 
 
 @app.get("/api/leaderboard")
 async def get_leaderboard():
-    """Get global agent leaderboard."""
     sorted_board = sorted(
         global_leaderboard.values(),
         key=lambda x: (x["wins"], x["total_score"]),
@@ -202,19 +203,14 @@ async def get_leaderboard():
     return {"leaderboard": sorted_board}
 
 
-# ── WebSocket ─────────────────────────────────────────
-
 @app.websocket("/ws/debate/{debate_id}")
 async def debate_websocket(websocket: WebSocket, debate_id: str):
-    """Real-time debate event stream."""
     await websocket.accept()
-
     if debate_id not in ws_connections:
         ws_connections[debate_id] = []
     ws_connections[debate_id].append(websocket)
 
     try:
-        # Send any existing events (for reconnection)
         room = active_debates.get(debate_id)
         if room:
             for event in room.events:
@@ -224,8 +220,6 @@ async def debate_websocket(websocket: WebSocket, debate_id: str):
                     "data": event.data,
                     "timestamp": event.timestamp.isoformat(),
                 })
-
-        # Keep connection alive
         while True:
             try:
                 await websocket.receive_text()
@@ -241,10 +235,7 @@ async def debate_websocket(websocket: WebSocket, debate_id: str):
 # ── Background Tasks ─────────────────────────────────
 
 async def _run_debate(debate_id: str, room: DebateRoom):
-    """Run a debate and broadcast events."""
-
     async def broadcast_event(event: DebateEvent):
-        """Push event to all WebSocket connections."""
         data = {
             "type": event.type,
             "phase": event.phase.value,
@@ -265,11 +256,9 @@ async def _run_debate(debate_id: str, room: DebateRoom):
 
     try:
         result = await room.run()
-
-        # Store result
         debate_results[debate_id] = result.model_dump()
 
-        # Update global leaderboard
+        # Update leaderboard
         for agent_name, pnl in result.payouts.items():
             if agent_name in global_leaderboard:
                 lb = global_leaderboard[agent_name]
@@ -291,12 +280,9 @@ async def _run_debate(debate_id: str, room: DebateRoom):
         import traceback
         traceback.print_exc()
     finally:
-        # Cleanup
         if debate_id in active_debates:
             del active_debates[debate_id]
 
-
-# ── Run ───────────────────────────────────────────────
 
 if __name__ == "__main__":
     import uvicorn
