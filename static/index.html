@@ -1,0 +1,723 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>知乎观点擂台 — AI Agent 辩论竞技场</title>
+    <style>
+        :root {
+            --bg: #0a0a0f;
+            --surface: #12121a;
+            --surface-2: #1a1a26;
+            --surface-3: #222233;
+            --border: #2a2a3e;
+            --text: #e8e8f2;
+            --text-dim: #7878a0;
+            --gold: #ffd700;
+            --accent: #7c5cfc;
+            --accent-dim: rgba(124, 92, 252, 0.12);
+            --green: #4ecdc4;
+            --red: #ff6b6b;
+            --yellow: #ffd93d;
+            --purple: #6c5ce7;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, 'PingFang SC', 'Noto Sans SC', 'Microsoft YaHei', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+        }
+
+        /* ── Header ── */
+        .header {
+            text-align: center;
+            padding: 28px 20px 18px;
+            background: linear-gradient(180deg, rgba(124,92,252,0.06) 0%, transparent 100%);
+            border-bottom: 1px solid var(--border);
+        }
+        .header h1 {
+            font-size: 26px;
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--green), var(--accent), var(--red));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .header .sub { color: var(--text-dim); font-size: 13px; margin-top: 4px; }
+
+        /* ── Section wrapper ── */
+        .container { max-width: 960px; margin: 0 auto; padding: 0 16px; }
+
+        /* ── Topic Selection ── */
+        #topic-section { padding: 24px 0; }
+        .section-title { font-size: 16px; color: var(--text-dim); margin-bottom: 14px; font-weight: 600; }
+
+        .topic-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 18px;
+            margin-bottom: 14px;
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+        .topic-card:hover { border-color: var(--accent); transform: translateY(-1px); }
+        .topic-card.selected { border-color: var(--accent); background: var(--accent-dim); }
+        .topic-card .tc-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+        .topic-card .tc-cat { font-size: 11px; color: var(--accent); text-transform: uppercase; letter-spacing: 1px; font-weight: 700; }
+        .topic-card .tc-hot { font-size: 11px; color: var(--red); background: rgba(255,107,107,0.12); padding: 2px 8px; border-radius: 10px; }
+        .topic-card .tc-title { font-size: 16px; font-weight: 700; margin-bottom: 10px; }
+        .topic-card .tc-ctx { font-size: 12px; color: var(--text-dim); line-height: 1.5; margin-bottom: 10px; }
+
+        /* Polymarket-style option pills */
+        .tc-options { display: flex; flex-wrap: wrap; gap: 6px; }
+        .tc-opt {
+            display: inline-flex; align-items: center; gap: 4px;
+            font-size: 12px; padding: 4px 10px; border-radius: 16px;
+            background: var(--surface-2); border: 1px solid var(--border);
+        }
+        .tc-opt .dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+
+        .start-btn {
+            display: block; width: 100%; padding: 14px;
+            font-size: 15px; font-weight: 700; color: white;
+            background: linear-gradient(135deg, var(--accent), #5a3fd4);
+            border: none; border-radius: 12px; cursor: pointer;
+            transition: all 0.15s; margin-top: 10px;
+        }
+        .start-btn:hover { transform: translateY(-1px); opacity: 0.92; }
+        .start-btn:disabled { opacity: 0.35; cursor: not-allowed; transform: none; }
+
+        /* ── Arena ── */
+        #arena { display: none; padding: 20px 0; }
+        #arena.active { display: block; }
+
+        .arena-topic {
+            text-align: center; padding: 16px 20px;
+            background: var(--surface); border-radius: 14px;
+            border: 1px solid var(--border); margin-bottom: 16px;
+        }
+        .arena-topic .at-title { font-size: 18px; font-weight: 800; margin-bottom: 8px; }
+        .phase-pill {
+            display: inline-block; padding: 3px 14px; border-radius: 16px;
+            font-size: 12px; font-weight: 700;
+            background: var(--accent-dim); color: var(--accent);
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.55} }
+
+        /* ── Market Odds Bar (Polymarket-style) ── */
+        .market-panel {
+            background: var(--surface); border-radius: 14px;
+            border: 1px solid var(--border); padding: 16px;
+            margin-bottom: 16px;
+        }
+        .market-panel .mp-head {
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 12px;
+        }
+        .mp-title { font-size: 13px; color: var(--text-dim); font-weight: 600; }
+        .mp-pool { font-size: 13px; color: var(--gold); font-weight: 700; }
+
+        .odds-bar-container { margin-bottom: 4px; }
+        .odds-bar {
+            display: flex; height: 32px; border-radius: 8px; overflow: hidden;
+            background: var(--surface-2);
+        }
+        .odds-segment {
+            display: flex; align-items: center; justify-content: center;
+            font-size: 11px; font-weight: 700; color: white;
+            transition: width 0.6s ease; min-width: 0;
+            white-space: nowrap; overflow: hidden;
+        }
+        .odds-labels { display: flex; margin-top: 6px; }
+        .odds-label {
+            display: flex; align-items: center; gap: 4px;
+            font-size: 11px; color: var(--text-dim); margin-right: 14px;
+        }
+        .odds-label .ol-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+
+        /* Option cards with Polymarket-style pricing */
+        .option-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; margin-top: 12px; }
+        .option-card {
+            background: var(--surface-2); border-radius: 10px; padding: 12px;
+            border: 1px solid var(--border); transition: all 0.2s;
+        }
+        .option-card .oc-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+        .option-card .oc-label { font-size: 13px; font-weight: 700; }
+        .option-card .oc-price { font-size: 18px; font-weight: 800; }
+        .option-card .oc-detail { font-size: 11px; color: var(--text-dim); }
+        .option-card .oc-agents { font-size: 11px; margin-top: 6px; color: var(--text-dim); }
+        .option-card .oc-agents span { font-size: 16px; }
+
+        /* ── Debate Feed ── */
+        .debate-feed {
+            background: var(--surface); border-radius: 14px;
+            border: 1px solid var(--border); padding: 16px;
+            min-height: 200px; max-height: 550px; overflow-y: auto;
+        }
+        .debate-feed::-webkit-scrollbar { width: 3px; }
+        .debate-feed::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+        .feed-empty { text-align: center; color: var(--text-dim); padding: 50px 20px; font-size: 13px; }
+
+        .phase-divider {
+            text-align: center; margin: 16px 0; position: relative;
+        }
+        .phase-divider::before {
+            content: ''; position: absolute; left: 0; right: 0; top: 50%;
+            height: 1px; background: var(--border);
+        }
+        .phase-divider span {
+            position: relative; background: var(--surface); padding: 3px 14px;
+            font-size: 11px; font-weight: 700; color: var(--accent);
+            border: 1px solid var(--border); border-radius: 16px;
+        }
+
+        .debate-msg {
+            display: flex; gap: 10px; margin: 10px 0; padding: 10px 12px;
+            border-radius: 10px; animation: slideIn 0.25s ease-out;
+            border-left: 3px solid transparent;
+        }
+        @keyframes slideIn { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
+
+        .msg-avatar { font-size: 24px; flex-shrink: 0; width: 36px; display: flex; align-items: flex-start; justify-content: center; padding-top: 2px; }
+        .msg-body { flex: 1; min-width: 0; }
+        .msg-header { display: flex; align-items: center; gap: 6px; margin-bottom: 4px; flex-wrap: wrap; }
+        .msg-name { font-weight: 700; font-size: 13px; }
+        .msg-badge {
+            font-size: 10px; padding: 1px 7px; border-radius: 8px; font-weight: 600;
+            white-space: nowrap;
+        }
+        .msg-target { font-size: 10px; color: var(--text-dim); }
+        .msg-content { font-size: 13px; line-height: 1.6; }
+        .msg-tactics { display: flex; gap: 4px; margin-top: 5px; flex-wrap: wrap; }
+        .msg-tactics span { font-size: 10px; padding: 1px 6px; border-radius: 8px; background: var(--surface-3); color: var(--text-dim); }
+
+        /* Position change */
+        .position-change {
+            text-align: center; margin: 12px 0; padding: 12px;
+            border-radius: 10px; border: 1px dashed var(--gold);
+            background: rgba(255,215,0,0.04);
+            animation: slideIn 0.3s ease-out;
+        }
+        .position-change .pc-icon { font-size: 18px; }
+        .position-change .pc-text { font-size: 13px; font-weight: 700; margin: 4px 0; }
+        .position-change .pc-reason { font-size: 11px; color: var(--text-dim); }
+
+        /* ── Result Panel ── */
+        .result-panel {
+            display: none; background: var(--surface); border-radius: 14px;
+            border: 1px solid var(--border); padding: 20px; margin-top: 16px;
+            animation: slideIn 0.4s ease-out;
+        }
+        .result-panel.visible { display: block; }
+        .result-header { text-align: center; margin-bottom: 16px; }
+        .result-header .trophy { font-size: 40px; }
+        .result-header h2 { font-size: 18px; margin: 6px 0; }
+        .winner-badge {
+            display: inline-block; padding: 5px 16px; border-radius: 16px;
+            font-size: 14px; font-weight: 800; border: 1px solid;
+        }
+
+        .judge-box {
+            background: var(--surface-2); border-radius: 10px; padding: 14px;
+            margin: 14px 0; border-left: 3px solid var(--gold);
+        }
+        .judge-box .jb-label { font-size: 11px; color: var(--gold); font-weight: 700; margin-bottom: 4px; }
+        .judge-box .jb-text { font-size: 13px; line-height: 1.6; }
+
+        .highlights { margin: 10px 0; }
+        .highlights .hl-item {
+            font-size: 12px; color: var(--text-dim); padding: 4px 0;
+            border-bottom: 1px solid var(--border);
+        }
+        .highlights .hl-item:last-child { border-bottom: none; }
+
+        .payouts { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 8px; margin-top: 14px; }
+        .payout-card { background: var(--surface-2); border-radius: 10px; padding: 10px; text-align: center; }
+        .payout-card .pc-emoji { font-size: 20px; }
+        .payout-card .pc-name { font-size: 12px; margin: 2px 0; }
+        .payout-card .pc-amount { font-size: 16px; font-weight: 800; }
+        .pc-amount.win { color: var(--green); }
+        .pc-amount.lose { color: var(--red); }
+
+        .new-debate-btn {
+            display: none; width: 100%; max-width: 400px; margin: 16px auto;
+            padding: 12px; font-size: 14px; font-weight: 700; color: white;
+            background: linear-gradient(135deg, var(--accent), #5a3fd4);
+            border: none; border-radius: 10px; cursor: pointer;
+        }
+        .new-debate-btn.visible { display: block; }
+
+        /* ── Leaderboard ── */
+        .lb-section { padding: 24px 0; }
+        .lb-table {
+            width: 100%; background: var(--surface); border-radius: 14px;
+            border: 1px solid var(--border); overflow: hidden;
+        }
+        .lb-table th, .lb-table td { padding: 10px 14px; text-align: left; font-size: 13px; }
+        .lb-table th {
+            background: var(--surface-2); color: var(--text-dim); font-size: 11px;
+            font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;
+        }
+        .lb-table tr { border-bottom: 1px solid var(--border); }
+        .lb-table tr:last-child { border-bottom: none; }
+        .lb-rank { font-weight: 800; color: var(--gold); width: 30px; }
+
+        @media (max-width: 640px) {
+            .option-cards { grid-template-columns: 1fr 1fr; }
+            .payouts { grid-template-columns: repeat(2, 1fr); }
+            .header h1 { font-size: 22px; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="header">
+    <h1>知乎观点擂台</h1>
+    <div class="sub">Polymarket 风格 AI Agent 辩论竞技场 — 多选项下注 + 实时辩论 + 裁判裁决</div>
+</div>
+
+<!-- Topic Selection -->
+<div id="topic-section" class="container">
+    <div class="section-title">选择辩题 — 来自知乎热榜</div>
+    <div id="topics-list"></div>
+    <button id="start-btn" class="start-btn" disabled onclick="startDebate()">选择一个话题开始辩论</button>
+</div>
+
+<!-- Arena -->
+<div id="arena" class="container">
+    <div class="arena-topic">
+        <div id="at-title" class="at-title"></div>
+        <div id="phase-pill" class="phase-pill">准备中...</div>
+    </div>
+
+    <!-- Market Panel (Polymarket-style odds) -->
+    <div class="market-panel">
+        <div class="mp-head">
+            <span class="mp-title">实时市场赔率</span>
+            <span id="mp-pool" class="mp-pool">总池: 0</span>
+        </div>
+        <div class="odds-bar-container">
+            <div id="odds-bar" class="odds-bar"></div>
+        </div>
+        <div id="odds-labels" class="odds-labels"></div>
+        <div id="option-cards" class="option-cards"></div>
+    </div>
+
+    <!-- Debate Feed -->
+    <div id="debate-feed" class="debate-feed">
+        <div class="feed-empty">等待 Agent 入场...</div>
+    </div>
+
+    <!-- Result -->
+    <div id="result-panel" class="result-panel">
+        <div class="result-header">
+            <div class="trophy">🏆</div>
+            <h2>裁判裁决</h2>
+            <div id="winner-badge" class="winner-badge"></div>
+        </div>
+        <div id="mvp-line" style="text-align:center;font-size:13px;color:var(--gold);margin:8px 0"></div>
+        <div class="judge-box">
+            <div class="jb-label">裁判点评</div>
+            <div id="judge-text" class="jb-text"></div>
+        </div>
+        <div id="highlights" class="highlights"></div>
+        <div id="payouts" class="payouts"></div>
+    </div>
+    <button id="new-debate-btn" class="new-debate-btn" onclick="newDebate()">开始新一场辩论</button>
+</div>
+
+<!-- Leaderboard -->
+<div class="container lb-section">
+    <div class="section-title">全局排行榜</div>
+    <table class="lb-table">
+        <thead><tr><th>#</th><th>Agent</th><th>胜/负</th><th>总积分</th><th>说服力</th></tr></thead>
+        <tbody id="lb-body"><tr><td colspan="5" style="text-align:center;color:var(--text-dim)">辩论结束后更新</td></tr></tbody>
+    </table>
+</div>
+
+<script>
+let selectedIdx = -1;
+let debateId = null;
+let ws = null;
+let feedCleared = false;
+let topicsData = [];
+// Track current options and their state
+let currentOptions = [];   // [{key, label, color, description}]
+let optionAgents = {};     // option_key -> [{name, emoji}]
+let optionPools = {};
+let totalPool = 0;
+
+async function loadTopics() {
+    const r = await fetch('/api/topics');
+    const d = await r.json();
+    topicsData = d.topics;
+    const list = document.getElementById('topics-list');
+    list.innerHTML = '';
+    d.topics.forEach((t, i) => {
+        const c = document.createElement('div');
+        c.className = 'topic-card';
+        c.onclick = () => selectTopic(i);
+        const optHtml = (t.options || []).map(o =>
+            `<span class="tc-opt"><span class="dot" style="background:${o.color}"></span>${o.label}</span>`
+        ).join('');
+        c.innerHTML = `
+            <div class="tc-head">
+                <span class="tc-cat">${t.category}</span>
+                <span class="tc-hot">🔥 ${t.hot_score}</span>
+            </div>
+            <div class="tc-title">${t.title}</div>
+            <div class="tc-ctx">${t.context}</div>
+            <div class="tc-options">${optHtml}</div>
+        `;
+        list.appendChild(c);
+    });
+}
+
+function selectTopic(i) {
+    selectedIdx = i;
+    document.querySelectorAll('.topic-card').forEach((c, j) => c.classList.toggle('selected', j === i));
+    const btn = document.getElementById('start-btn');
+    btn.disabled = false;
+    btn.textContent = '开始辩论！';
+}
+
+async function startDebate() {
+    if (selectedIdx < 0) return;
+    const btn = document.getElementById('start-btn');
+    btn.disabled = true;
+    btn.textContent = '正在召集 Agent...';
+
+    const r = await fetch('/api/debate/start', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+        body: `topic_index=${selectedIdx}`,
+    });
+    const d = await r.json();
+    debateId = d.debate_id;
+
+    // Init options from topic
+    currentOptions = d.topic.options || [];
+    optionAgents = {};
+    optionPools = {};
+    totalPool = 0;
+    currentOptions.forEach(o => { optionAgents[o.key] = []; optionPools[o.key] = 0; });
+
+    // Switch view
+    document.getElementById('topic-section').style.display = 'none';
+    const arena = document.getElementById('arena');
+    arena.classList.add('active');
+    document.getElementById('at-title').textContent = d.topic.title;
+    document.getElementById('result-panel').classList.remove('visible');
+    document.getElementById('new-debate-btn').classList.remove('visible');
+    feedCleared = false;
+    document.getElementById('debate-feed').innerHTML = '<div class="feed-empty">Agent 们正在分析话题，选择立场...</div>';
+
+    renderMarket();
+    connectWS(debateId);
+}
+
+function connectWS(id) {
+    const proto = location.protocol === 'https:' ? 'wss:' : 'ws:';
+    ws = new WebSocket(`${proto}//${location.host}/ws/debate/${id}`);
+    ws.onmessage = e => handleEvent(JSON.parse(e.data));
+    ws.onclose = () => console.log('WS closed');
+}
+
+function handleEvent(ev) {
+    switch(ev.type) {
+        case 'phase_change': updatePhase(ev.data); break;
+        case 'bet': addBet(ev.data); break;
+        case 'market_update': updateMarket(ev.data); break;
+        case 'message': addMessage(ev.data); break;
+        case 'position_change': addPositionChange(ev.data); break;
+        case 'result': showResult(ev.data); break;
+    }
+}
+
+function updatePhase(d) {
+    const pill = document.getElementById('phase-pill');
+    pill.textContent = d.label || d.phase;
+    if (d.phase === 'resolution') {
+        pill.style.background = 'rgba(255,215,0,0.12)';
+        pill.style.color = 'var(--gold)';
+    }
+}
+
+function addBet(d) {
+    if (!feedCleared) { document.getElementById('debate-feed').innerHTML = ''; feedCleared = true; }
+
+    // Track agent per option
+    if (!optionAgents[d.position]) optionAgents[d.position] = [];
+    optionAgents[d.position].push({name: d.agent_name, emoji: d.agent_emoji});
+
+    // Add to feed
+    const feed = document.getElementById('debate-feed');
+    const msg = document.createElement('div');
+    const bgColor = d.position_color ? d.position_color + '12' : 'var(--surface-2)';
+    msg.className = 'debate-msg';
+    msg.style.background = bgColor;
+    msg.style.borderLeftColor = d.position_color || 'var(--accent)';
+    msg.innerHTML = `
+        <div class="msg-avatar">${d.agent_emoji}</div>
+        <div class="msg-body">
+            <div class="msg-header">
+                <span class="msg-name">${d.agent_name}</span>
+                <span class="msg-badge" style="background:${d.position_color || '#555'}22;color:${d.position_color || '#aaa'}">${d.position_label}</span>
+                <span style="font-size:11px;color:var(--text-dim)">${d.stake}分 · 信心${Math.round(d.confidence*100)}%</span>
+            </div>
+            <div class="msg-content">${d.reasoning}</div>
+            <div style="font-size:11px;color:var(--text-dim);margin-top:4px">
+                赔率 $${d.odds.toFixed(2)} · 预期收益 ${d.potential_payout > 0 ? '+'+d.potential_payout : d.potential_payout}分
+            </div>
+        </div>
+    `;
+    feed.appendChild(msg);
+    feed.scrollTop = feed.scrollHeight;
+}
+
+function updateMarket(d) {
+    optionPools = d.pools || {};
+    totalPool = d.total_pool || 0;
+    renderMarket();
+}
+
+function renderMarket() {
+    const bar = document.getElementById('odds-bar');
+    const labels = document.getElementById('odds-labels');
+    const cards = document.getElementById('option-cards');
+    document.getElementById('mp-pool').textContent = `总池: ${totalPool.toFixed(0)}分`;
+
+    // Calculate odds
+    let odds = {};
+    if (totalPool > 0) {
+        currentOptions.forEach(o => { odds[o.key] = (optionPools[o.key] || 0) / totalPool; });
+    } else {
+        const n = currentOptions.length;
+        currentOptions.forEach(o => { odds[o.key] = 1/n; });
+    }
+
+    // Odds bar
+    bar.innerHTML = '';
+    currentOptions.forEach(o => {
+        const pct = (odds[o.key] || 0) * 100;
+        if (pct < 1) return;
+        const seg = document.createElement('div');
+        seg.className = 'odds-segment';
+        seg.style.width = pct + '%';
+        seg.style.background = o.color;
+        seg.textContent = pct >= 8 ? `${Math.round(pct)}%` : '';
+        bar.appendChild(seg);
+    });
+
+    // Labels
+    labels.innerHTML = '';
+    currentOptions.forEach(o => {
+        const lbl = document.createElement('div');
+        lbl.className = 'odds-label';
+        lbl.innerHTML = `<span class="ol-dot" style="background:${o.color}"></span>${o.label}`;
+        labels.appendChild(lbl);
+    });
+
+    // Option cards
+    cards.innerHTML = '';
+    currentOptions.forEach(o => {
+        const price = Math.max(0.01, Math.min(0.99, odds[o.key] || 0));
+        const mult = price > 0 ? (1/price).toFixed(1) : '0';
+        const pool = (optionPools[o.key] || 0).toFixed(0);
+        const agents = (optionAgents[o.key] || []);
+        const agentEmojis = agents.map(a => `<span title="${a.name}">${a.emoji}</span>`).join(' ');
+
+        const card = document.createElement('div');
+        card.className = 'option-card';
+        card.style.borderColor = o.color + '44';
+        card.innerHTML = `
+            <div class="oc-head">
+                <span class="oc-label" style="color:${o.color}">${o.label}</span>
+                <span class="oc-price" style="color:${o.color}">$${price.toFixed(2)}</span>
+            </div>
+            <div class="oc-detail">赔率 ${mult}x · 池内 ${pool}分</div>
+            <div class="oc-agents">${agentEmojis || '<span style="color:var(--text-dim)">—</span>'}</div>
+        `;
+        cards.appendChild(card);
+    });
+}
+
+function addMessage(d) {
+    const feed = document.getElementById('debate-feed');
+    const phaseLabels = { opening: '第一轮：开场陈述', rebuttal: '第二轮：反驳交锋', free_debate: '第三轮：自由辩论' };
+    if (phaseLabels[d.phase]) {
+        const existing = feed.querySelectorAll('.phase-divider');
+        const lbl = phaseLabels[d.phase];
+        if (!Array.from(existing).some(el => el.textContent.trim() === lbl)) {
+            const div = document.createElement('div');
+            div.className = 'phase-divider';
+            div.innerHTML = `<span>${lbl}</span>`;
+            feed.appendChild(div);
+        }
+    }
+
+    // Find option color
+    const opt = currentOptions.find(o => o.key === d.position);
+    const color = opt ? opt.color : '#888';
+
+    const msg = document.createElement('div');
+    msg.className = 'debate-msg';
+    msg.style.background = color + '0a';
+    msg.style.borderLeftColor = color;
+
+    let targetHtml = d.target_agent ? `<span class="msg-target">→ @${d.target_agent}</span>` : '';
+    let tacticsHtml = (d.tactics && d.tactics.length) ?
+        '<div class="msg-tactics">' + d.tactics.map(t => `<span>${t}</span>`).join('') + '</div>' : '';
+
+    msg.innerHTML = `
+        <div class="msg-avatar">${d.agent_emoji}</div>
+        <div class="msg-body">
+            <div class="msg-header">
+                <span class="msg-name">${d.agent_name}</span>
+                <span class="msg-badge" style="background:${color}22;color:${color}">${d.position_label}</span>
+                ${targetHtml}
+            </div>
+            <div class="msg-content">${d.content}</div>
+            ${tacticsHtml}
+        </div>
+    `;
+    feed.appendChild(msg);
+    feed.scrollTop = feed.scrollHeight;
+}
+
+function addPositionChange(d) {
+    const feed = document.getElementById('debate-feed');
+    if (!Array.from(feed.querySelectorAll('.phase-divider')).some(el => el.textContent.trim() === '立场更新')) {
+        const div = document.createElement('div');
+        div.className = 'phase-divider';
+        div.innerHTML = '<span>立场更新</span>';
+        feed.appendChild(div);
+    }
+
+    const change = document.createElement('div');
+    change.className = 'position-change';
+    change.innerHTML = `
+        <div class="pc-icon">🔄</div>
+        <div class="pc-text">${d.agent_emoji} ${d.agent_name} 改变了立场！</div>
+        <div style="font-size:13px;margin:4px 0">
+            <span style="text-decoration:line-through;color:var(--text-dim)">${d.old_label}</span>
+            →
+            <span style="font-weight:700">${d.new_label}</span>
+        </div>
+        <div class="pc-reason">${d.reasoning}${d.influenced_by ? ' · 被 '+d.influenced_by+' 说服' : ''}</div>
+    `;
+    feed.appendChild(change);
+    feed.scrollTop = feed.scrollHeight;
+
+    // Move agent between option groups
+    if (optionAgents[d.old_position]) {
+        optionAgents[d.old_position] = optionAgents[d.old_position].filter(a => a.name !== d.agent_name);
+    }
+    if (!optionAgents[d.new_position]) optionAgents[d.new_position] = [];
+    optionAgents[d.new_position].push({name: d.agent_name, emoji: d.agent_emoji});
+}
+
+function showResult(d) {
+    document.getElementById('phase-pill').textContent = '辩论结束';
+    document.getElementById('phase-pill').style.animation = 'none';
+
+    const panel = document.getElementById('result-panel');
+    panel.classList.add('visible');
+
+    const opt = currentOptions.find(o => o.key === d.winning_position);
+    const color = opt ? opt.color : '#888';
+    const badge = document.getElementById('winner-badge');
+    badge.style.background = color + '18';
+    badge.style.color = color;
+    badge.style.borderColor = color;
+    badge.textContent = `${d.winning_label} 胜出！`;
+
+    document.getElementById('mvp-line').textContent = d.mvp ? `MVP: ${d.mvp}` : '';
+    document.getElementById('judge-text').textContent = d.judge_reasoning;
+
+    // Highlights
+    const hlDiv = document.getElementById('highlights');
+    hlDiv.innerHTML = '';
+    if (d.highlights && d.highlights.length) {
+        d.highlights.forEach(h => {
+            const item = document.createElement('div');
+            item.className = 'hl-item';
+            item.textContent = '✦ ' + h;
+            hlDiv.appendChild(item);
+        });
+    }
+
+    // Payouts
+    const payDiv = document.getElementById('payouts');
+    payDiv.innerHTML = '';
+    if (d.payouts) {
+        const sorted = Object.entries(d.payouts).sort((a, b) => b[1] - a[1]);
+        sorted.forEach(([name, amt]) => {
+            const card = document.createElement('div');
+            card.className = 'payout-card';
+            const cls = amt > 0 ? 'win' : 'lose';
+            const sign = amt > 0 ? '+' : '';
+            card.innerHTML = `<div class="pc-name">${name}</div><div class="pc-amount ${cls}">${sign}${amt}</div>`;
+            payDiv.appendChild(card);
+        });
+    }
+
+    // Update final market odds
+    if (d.final_odds) {
+        currentOptions.forEach(o => { optionPools[o.key] = (d.final_odds[o.key] || 0) * (d.total_pool || 0); });
+        totalPool = d.total_pool || 0;
+        renderMarket();
+    }
+
+    document.getElementById('new-debate-btn').classList.add('visible');
+    loadLeaderboard();
+
+    // Add divider
+    const feed = document.getElementById('debate-feed');
+    const div = document.createElement('div');
+    div.className = 'phase-divider';
+    div.innerHTML = '<span>裁判裁决</span>';
+    feed.appendChild(div);
+    feed.scrollTop = feed.scrollHeight;
+}
+
+function newDebate() {
+    document.getElementById('arena').classList.remove('active');
+    document.getElementById('topic-section').style.display = 'block';
+    selectedIdx = -1;
+    document.querySelectorAll('.topic-card').forEach(c => c.classList.remove('selected'));
+    document.getElementById('start-btn').disabled = true;
+    document.getElementById('start-btn').textContent = '选择一个话题开始辩论';
+    if (ws) ws.close();
+}
+
+async function loadLeaderboard() {
+    try {
+        const r = await fetch('/api/leaderboard');
+        const d = await r.json();
+        if (d.leaderboard.every(a => a.debates === 0)) return;
+        const tbody = document.getElementById('lb-body');
+        tbody.innerHTML = '';
+        d.leaderboard.forEach((a, i) => {
+            const sc = a.total_score > 0 ? 'var(--green)' : a.total_score < 0 ? 'var(--red)' : 'var(--text-dim)';
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td class="lb-rank">${i+1}</td>
+                <td>${a.emoji} ${a.name}</td>
+                <td>${a.wins}W / ${a.losses}L</td>
+                <td style="color:${sc};font-weight:800">${a.total_score>0?'+':''}${a.total_score}</td>
+                <td>${a.persuasions_caused}</td>
+            `;
+            tbody.appendChild(tr);
+        });
+    } catch(e) {}
+}
+
+loadTopics();
+loadLeaderboard();
+</script>
+</body>
+</html>
