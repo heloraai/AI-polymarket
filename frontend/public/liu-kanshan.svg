@@ -1,0 +1,45 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200">
+  <!-- Background circle -->
+  <circle cx="100" cy="100" r="100" fill="#0084FF"/>
+
+  <!-- Body -->
+  <ellipse cx="100" cy="135" rx="55" ry="50" fill="white"/>
+
+  <!-- Head -->
+  <ellipse cx="100" cy="95" rx="45" ry="40" fill="white"/>
+
+  <!-- Left ear -->
+  <polygon points="65,65 55,30 80,55" fill="white"/>
+  <polygon points="68,62 60,38 77,56" fill="#FFE0D0"/>
+
+  <!-- Right ear -->
+  <polygon points="135,65 145,30 120,55" fill="white"/>
+  <polygon points="132,62 140,38 123,56" fill="#FFE0D0"/>
+
+  <!-- Left eye -->
+  <ellipse cx="82" cy="90" rx="5" ry="6" fill="#333"/>
+  <circle cx="80" cy="88" r="1.5" fill="white"/>
+
+  <!-- Right eye -->
+  <ellipse cx="118" cy="90" rx="5" ry="6" fill="#333"/>
+  <circle cx="116" cy="88" r="1.5" fill="white"/>
+
+  <!-- Nose -->
+  <ellipse cx="100" cy="100" rx="4" ry="3" fill="#333"/>
+
+  <!-- Mouth - slight smile -->
+  <path d="M 92 106 Q 100 112 108 106" stroke="#333" stroke-width="2" fill="none" stroke-linecap="round"/>
+
+  <!-- Blush -->
+  <ellipse cx="75" cy="102" rx="8" ry="5" fill="#FFB6C1" opacity="0.5"/>
+  <ellipse cx="125" cy="102" rx="8" ry="5" fill="#FFB6C1" opacity="0.5"/>
+
+  <!-- Judge gavel (unique to 刘半山) -->
+  <rect x="130" y="55" width="8" height="25" rx="2" fill="#8B4513" transform="rotate(-30 134 67)"/>
+  <rect x="125" y="48" width="18" height="12" rx="3" fill="#A0522D" transform="rotate(-30 134 54)"/>
+
+  <!-- Speech bubble with "判" -->
+  <ellipse cx="155" cy="40" rx="22" ry="18" fill="#FFD700"/>
+  <polygon points="140,52 148,45 145,55" fill="#FFD700"/>
+  <text x="155" y="46" text-anchor="middle" font-size="18" font-weight="bold" fill="#333" font-family="sans-serif">判</text>
+</svg>

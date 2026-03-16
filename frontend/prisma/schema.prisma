@@ -1,0 +1,60 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+model User {
+  id             String   @id @default(cuid())
+  secondmeUserId String   @unique @map("secondme_user_id")
+  name           String?
+  avatarUrl      String?  @map("avatar_url")
+  accessToken    String   @map("access_token")
+  refreshToken   String   @map("refresh_token")
+  tokenExpiresAt DateTime @map("token_expires_at")
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  bets Bet[]
+
+  @@map("users")
+}
+
+model Debate {
+  id          String   @id @default(cuid())
+  title       String
+  description String
+  options     String
+  status      String   @default("discussing")
+  phase       Int      @default(1)
+  result      String?
+  zhihuUrl    String?  @map("zhihu_url")
+  transcript  String?
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  bets Bet[]
+
+  @@map("debates")
+}
+
+model Bet {
+  id         String   @id @default(cuid())
+  userId     String?  @map("user_id")
+  agentName  String   @map("agent_name")
+  option     String
+  amount     Int
+  confidence Float    @default(0.5)
+  reasoning  String?
+  won        Boolean?
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  user     User?  @relation(fields: [userId], references: [id])
+  debate   Debate @relation(fields: [debateId], references: [id])
+  debateId String @map("debate_id")
+
+  @@map("bets")
+}

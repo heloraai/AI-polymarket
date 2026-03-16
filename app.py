@@ -1,18 +1,15 @@
-"""ZhihuMarket — AI Agent 对战预测市场
+"""观点交易所 — CLI 竞技场模式
 
 5 个性格迥异的 AI Agent 在知乎热榜话题上互相博弈：
   🐂 牛哥 — 永远看多的乐观主义者
-  🐻 熊叔 — 专业唱衰三十年
-  🦊 狐狸 — 永远和大众反着来
-  🦉 猫头鹰 — 数据驱动的冷静分析师
-  🎲 赌狗 — 高风险高回报的动量追随者
-
-它们看到同样的知乎数据，但做出完全不同的交易决策。
-每笔交易都会移动市场价格，形成真正的博弈。
+  🐻 熊总 — 专业唱衰三十年
+  🦊 狐师 — 永远和大众反着来
+  🦉 鸮博士 — 数据驱动的冷静分析师
+  🎲 梭哈王 — 高风险高回报的动量追随者
 
 运行：
   python app.py           → 竞技场模式（默认）
-  python app.py --settle  → 结算模式（裁判判定结果 + 计算盈亏）
+  python app.py --settle  → 结算模式
 """
 
 import asyncio
@@ -29,9 +26,8 @@ async def run_arena():
     zhihu = ZhihuClient(cookie=ZHIHU_COOKIE)
 
     try:
-        # Step 1: 发现预测市场
         print("=" * 60)
-        print("  AI AGENT 对战预测市场")
+        print("  观点交易所 — AI Agent 对战预测市场")
         print("=" * 60)
         print("\n🔍 扫描知乎热榜，寻找战场...\n")
 
@@ -46,10 +42,9 @@ async def run_arena():
         for i, m in enumerate(markets, 1):
             print(f"  {i}. [{m.category}] {m.title}")
 
-        # Step 2: 每个市场进行 Agent 对战
         arena = Arena(zhihu, ANTHROPIC_API_KEY)
 
-        for market in markets[:3]:  # Demo: 最多3个市场
+        for market in markets[:3]:
             print(f"\n{'=' * 60}")
             print(f"  ⚔️  对战开始: {market.title}")
             print(f"{'=' * 60}")
@@ -57,14 +52,12 @@ async def run_arena():
 
             result = await arena.run_market(market)
 
-            # 展示交易过程
             if not result.trades:
                 print("  所有 Agent 都选择观望，没有交易发生。")
                 continue
 
             print("  📜 交易记录：")
             for trade in result.trades:
-                # 找到对应的 personality
                 emoji = ""
                 for p in arena.personalities:
                     if p.name == trade.agent_name:
@@ -76,11 +69,9 @@ async def run_arena():
                     f"买 {direction:3s} ${trade.amount:6.0f} "
                     f"(信心: {trade.confidence:.0%})"
                 )
-                # 缩短推理展示
                 reasoning = trade.reasoning.replace("\n", " ")[:100]
                 print(f"      💬 {reasoning}")
 
-            # 价格变化轨迹
             print(f"\n  📈 价格轨迹：")
             price_bar = " → ".join(f"{p:.0%}" for p in result.price_history)
             print(f"    {price_bar}")
@@ -91,7 +82,6 @@ async def run_arena():
             direction_word = "↑ 看涨" if delta > 0 else "↓ 看跌" if delta < 0 else "→ 持平"
             print(f"    最终价格: {final_price:.0%} ({direction_word} {abs(delta):.0%})")
 
-        # 排行榜
         print(f"\n{'=' * 60}")
         print("  🏆 Agent 排行榜")
         print(f"{'=' * 60}")
@@ -101,7 +91,6 @@ async def run_arena():
                 if p.name == portfolio.agent_name:
                     emoji = p.emoji
                     break
-
             trades_count = sum(
                 len(pos) for pos in portfolio.positions.values()
                 if isinstance(pos, list)
@@ -120,9 +109,8 @@ async def run_arena():
 
 
 async def run_settle():
-    """结算模式：裁判判定 + 计算盈亏"""
-    print("⚖️  结算模式尚未实现 — 需要等待预测事件到期后由 OutcomeJudge 裁定。")
-    print("   结算时会计算每个 Agent 的盈亏，更新排行榜。")
+    """结算模式"""
+    print("⚖️  结算模式尚未实现 — 需要等待预测事件到期后由裁判裁定。")
 
 
 if __name__ == "__main__":

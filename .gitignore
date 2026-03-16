@@ -7,3 +7,12 @@ venv/
 dist/
 build/
 .chroma/
+.secondme/
+node_modules/
+.next/
+.DS_Store
+*.db
+.claude/
+frontend/.next/
+frontend/node_modules/
+frontend/src/generated/
