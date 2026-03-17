@@ -1,18 +1,45 @@
 {
-  "smoke-test": {
-    "user_id": "smoke-test",
-    "user_name": "交易员_smoke-",
-    "balance": 200.0,
-    "created_at": "2026-03-17T15:54:12.810595",
-    "holdings": [],
-    "transactions": []
-  },
-  "81a4614e-aa3e-42c0-a65c-12a7b2bbaa4f": {
-    "user_id": "81a4614e-aa3e-42c0-a65c-12a7b2bbaa4f",
-    "user_name": "交易员_81a461",
-    "balance": 200.0,
-    "created_at": "2026-03-17T16:24:41.316196",
-    "holdings": [],
-    "transactions": []
+  "user001": {
+    "user_id": "user001",
+    "user_name": "交易员_user00",
+    "balance": 162.5,
+    "initial_balance": 200.0,
+    "created_at": "2026-03-17T16:31:11.487377",
+    "holdings": [
+      {
+        "id": "h_d8de3603",
+        "debate_id": "2c9e57a2",
+        "debate_title": "永辉超市自有品牌喊话山姆，称不要让供应商「二选一」，具体是怎么回事？",
+        "option_key": "option_0",
+        "option_label": "支持",
+        "quantity": 1,
+        "buy_price": 37.5,
+        "total_cost": 37.5,
+        "status": "settled_lose",
+        "bought_at": "2026-03-17T16:31:11.487689"
+      }
+    ],
+    "transactions": [
+      {
+        "id": "tx_4cb81b04",
+        "type": "buy",
+        "debate_id": "2c9e57a2",
+        "option_label": "支持",
+        "amount": -37.5,
+        "shares": 1,
+        "price_per_share": 37.5,
+        "timestamp": "2026-03-17T16:31:11.487705"
+      },
+      {
+        "id": "tx_d147ce2d",
+        "type": "settle_lose",
+        "debate_id": "2c9e57a2",
+        "option_label": "支持",
+        "amount": -37.5,
+        "shares": 1,
+        "price_per_share": 0,
+        "timestamp": "2026-03-17T16:34:11.051529"
+      }
+    ]
   }
 }
