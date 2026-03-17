@@ -46,13 +46,13 @@ def next_batch_time() -> Optional[str]:
 
 def _create_debates_from_hotlist(
     client,
-    max_debates: int = 10,
+    max_debates: int = 50,
 ) -> list[dict]:
     """Fetch Zhihu hotlist, filter out used topics, create new debates.
 
     Returns list of newly created debate dicts.
     """
-    topics = fetch_hotlist_for_debates(count=20)
+    topics = fetch_hotlist_for_debates(count=100)
     if not topics:
         print("[BATCH] No hotlist topics fetched")
         return []
@@ -134,12 +134,12 @@ def run_batch_debates():
 
         # Step 1: Create new debates from Zhihu hotlist
         print("[BATCH] Fetching Zhihu hotlist and creating debates...")
-        new_debates = _create_debates_from_hotlist(client, max_debates=10)
+        new_debates = _create_debates_from_hotlist(client, max_debates=50)
         print(f"[BATCH] Created {len(new_debates)} new debates from hotlist")
 
         # Step 2: Run debates that have been pending for 30+ minutes
         debates = load_debates()
-        cutoff_time = (datetime.now() - timedelta(minutes=5)).isoformat()  # 5分钟后自动开赛
+        cutoff_time = (datetime.now() - timedelta(minutes=1)).isoformat()  # 1分钟后自动开赛
         pending = [
             d for d in debates.values()
             if d.get("status") == "created"
@@ -150,13 +150,13 @@ def run_batch_debates():
             print("[BATCH] No mature pending debates to run (waiting for joins)")
             return
 
-        print(f"[BATCH] Starting batch: {len(pending)} mature debates (max 5, 1-min gaps)")
-        for i, debate in enumerate(pending[:5]):
+        print(f"[BATCH] Starting batch: {len(pending)} mature debates (max 10, 1-min gaps)")
+        for i, debate in enumerate(pending[:10]):
             if i > 0:
-                print(f"[BATCH] Waiting 60s before next debate ({i+1}/5)...")
+                print(f"[BATCH] Waiting 60s before next debate ({i+1}/10)...")
                 time.sleep(60)  # 1-minute gap between debates to stagger
             try:
-                print(f"[BATCH] Running ({i+1}/{min(len(pending), 5)}): {debate['title'][:30]}...")
+                print(f"[BATCH] Running ({i+1}/{min(len(pending), 10)}): {debate['title'][:30]}...")
                 # Rebuild agent list
                 agents = list(AGENT_PERSONALITIES)
                 builtin_ids = {a["id"] for a in AGENT_PERSONALITIES}

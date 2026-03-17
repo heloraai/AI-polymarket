@@ -26,6 +26,7 @@ def get_or_create_wallet(user_id: str, user_name: str = "") -> dict:
         "user_id": user_id,
         "user_name": user_name or f"交易员_{user_id[:6]}",
         "balance": INITIAL_USER_BALANCE,
+        "initial_balance": INITIAL_USER_BALANCE,
         "created_at": datetime.now().isoformat(),
         "holdings": [],
         "transactions": [],
@@ -60,11 +61,18 @@ def buy_shares(
     if debate.get("status") not in ("created", "running"):
         raise ValueError("辩论已结束，无法买入")
 
+    # Check if user already has a holding in this debate
+    for h in wallet.get("holdings", []):
+        if h["debate_id"] == debate_id and h["status"] == "active":
+            raise ValueError("你已经在这场辩论中买入了观点，不能重复买入")
+
     # Find option
     options = debate.get("options", [])
     option = next((o for o in options if o["key"] == option_key), None)
     if not option:
         raise ValueError(f"选项 {option_key} 不存在")
+
+    quantity = 1  # 每个观点只能买入1份
 
     # Get current price
     option_keys = [o["key"] for o in options]

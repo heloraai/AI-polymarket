@@ -88,6 +88,27 @@ export default function DebateDetailPage({ params }: { params: Promise<{ id: str
       .catch(() => setLoading(false));
   }, [id]);
 
+  // Auto-refresh when debate is running
+  useEffect(() => {
+    if (!debate || debate.status === 'finished') return;
+
+    const interval = setInterval(async () => {
+      try {
+        const res = await fetch(`/api/debates/${id}`);
+        if (res.ok) {
+          const updated = await res.json();
+          setDebate(updated);
+          if (updated.status === 'finished') {
+            clearInterval(interval);
+            refreshWallet();
+          }
+        }
+      } catch {}
+    }, 5000);
+
+    return () => clearInterval(interval);
+  }, [debate?.status, id, refreshWallet]);
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[#F6F6F6]">
@@ -172,10 +193,16 @@ export default function DebateDetailPage({ params }: { params: Promise<{ id: str
           <div className="bg-white rounded-xl border border-[#EBEBEB] p-3 mb-4 flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${
-                isFinished ? 'bg-[#E8F5E9] text-[#2E7D32]' : 'bg-[#FFF3E0] text-[#E65100]'
+                isFinished ? 'bg-[#E8F5E9] text-[#2E7D32]'
+                : debate.status === 'running' ? 'bg-[#FFF3E0] text-[#E65100]'
+                : 'bg-[#E8F0FE] text-[#0066FF]'
               }`}>
-                <span className={`w-1.5 h-1.5 rounded-full ${isFinished ? 'bg-[#2E7D32]' : 'bg-[#E65100] animate-pulse'}`} />
-                {isFinished ? '已结算' : '交易进行中'}
+                <span className={`w-1.5 h-1.5 rounded-full ${
+                  isFinished ? 'bg-[#2E7D32]'
+                  : debate.status === 'running' ? 'bg-[#E65100] animate-pulse'
+                  : 'bg-[#0066FF]'
+                }`} />
+                {isFinished ? '已结算' : debate.status === 'running' ? '辩论进行中' : '等待参战'}
               </div>
               {debate.bets.length > 0 && (
                 <span className="text-xs text-[#8590A6]">
@@ -388,9 +415,9 @@ export default function DebateDetailPage({ params }: { params: Promise<{ id: str
           {/* Empty state */}
           {!hasTranscript && !hasBets && (
             <div className="bg-white rounded-xl border border-[#EBEBEB] p-12 text-center">
-              <div className="text-4xl mb-3">⚔️</div>
-              <p className="text-[#8590A6] text-sm">辩论尚未开始</p>
-              <p className="text-[#C8C8C8] text-xs mt-1">在右侧买入你支持的观点，系统将自动开启辩论</p>
+              <div className="text-4xl mb-3">💰</div>
+              <p className="text-[#8590A6] text-sm">选择你支持的观点，买入即参战</p>
+              <p className="text-[#C8C8C8] text-xs mt-1">买入后系统将自动开启 AI 辩论</p>
             </div>
           )}
         </div>
