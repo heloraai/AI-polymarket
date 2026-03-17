@@ -25,7 +25,9 @@ _batch_lock = threading.Lock()
 _batch_running = False
 _next_batch_time: Optional[str] = None
 
-MIN_AVAILABLE_DEBATES = 10  # 始终保持至少10个可买入的辩论
+MIN_AVAILABLE_DEBATES = 10
+INITIAL_BATCH_SIZE = 50   # 启动时拉50条
+HOURLY_BATCH_SIZE = 20    # 每小时补20条
 
 
 def batch_running() -> bool:
@@ -36,7 +38,7 @@ def next_batch_time() -> Optional[str]:
     return _next_batch_time
 
 
-def _ensure_available_debates(client) -> int:
+def _ensure_available_debates(client, max_create: int = 20) -> int:
     """确保始终有足够的可买入辩论。不够就拉热榜补充。"""
     debates = load_debates()
     available = [
@@ -48,12 +50,12 @@ def _ensure_available_debates(client) -> int:
         print(f"[BATCH] {len(available)} debates available, enough")
         return 0
 
-    need = MIN_AVAILABLE_DEBATES - len(available)
-    print(f"[BATCH] Only {len(available)} available, need {need} more")
+    need = max(max_create, MIN_AVAILABLE_DEBATES - len(available))
+    print(f"[BATCH] Only {len(available)} available, creating up to {need}")
 
-    # 如果 used_topics 太多或可用辩论不够，清空重来
+    # 如果 used_topics 太多，清空重来
     used_topics = load_used_topics()
-    if len(used_topics) > 30:
+    if len(used_topics) > 40:
         print("[BATCH] Clearing used topics to refresh pool")
         used_topics = set()
         save_used_topics(used_topics)
@@ -65,7 +67,7 @@ def _ensure_available_debates(client) -> int:
 
     created = 0
     for topic in topics:
-        if created >= need + 10:  # 多创建一些buffer
+        if created >= need:
             break
 
         title = topic["title"]
@@ -122,8 +124,8 @@ def run_batch_debates():
     try:
         client = get_deepseek_client()
 
-        # Step 1: 确保有足够的可买入辩论
-        _ensure_available_debates(client)
+        # Step 1: 补充可买入辩论（每次补20条）
+        _ensure_available_debates(client, max_create=HOURLY_BATCH_SIZE)
 
         # Step 2: 自动运行到期的辩论（创建1分钟后）
         debates = load_debates()
@@ -232,8 +234,8 @@ def run_batch_debates():
                 debate["status"] = "created"
                 save_debate(debate)
 
-        # Step 3: 跑完后再检查一次，补充新辩论
-        _ensure_available_debates(client)
+        # Step 3: 跑完后再检查一次
+        _ensure_available_debates(client, max_create=10)
 
     finally:
         _batch_running = False
@@ -243,10 +245,11 @@ def schedule_batch_loop():
     """启动时立即拉热榜，然后定时循环。"""
     global _next_batch_time
 
-    # 启动时立即创建辩论
+    # 启动时立即拉50条
     try:
-        print("[BATCH] Initial debate creation on startup...")
-        run_batch_debates()
+        print(f"[BATCH] Startup: creating {INITIAL_BATCH_SIZE} debates...")
+        client = get_deepseek_client()
+        _ensure_available_debates(client, max_create=INITIAL_BATCH_SIZE)
     except Exception as e:
         print(f"[BATCH] Startup error: {e}")
 

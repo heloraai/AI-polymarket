@@ -46,5 +46,5 @@ CORS_ORIGINS = [
 SECONDME_API_BASE = "https://api.mindverse.com/gate/lab"
 
 # ── 批量调度 ──────────────────────────────────────────
-BATCH_INTERVAL_SECONDS = 10 * 60  # 10 分钟一轮
+BATCH_INTERVAL_SECONDS = 60 * 60  # 1 小时一轮
 HOTLIST_SCAN_INTERVAL = 3600
