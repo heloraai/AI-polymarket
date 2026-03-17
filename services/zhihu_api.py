@@ -134,10 +134,19 @@ def search_credible_formatted(query: str, count: int = 5) -> str:
 
 
 def fetch_hotlist_for_debates(count: int = 20) -> list[dict]:
-    """获取热榜话题（适配辩论系统格式）。"""
+    """获取热榜话题（适配辩论系统格式）。多时间窗口合并去重。"""
     if ZHIHU_APP_KEY and ZHIHU_APP_SECRET:
         try:
-            items = fetch_billboard(top_cnt=count)
+            # 多时间窗口拉取，合并去重，最大化话题数量
+            all_items: dict[str, dict] = {}
+            for hours in [48, 168, 720]:
+                batch = fetch_billboard(top_cnt=200, publish_in_hours=hours)
+                for item in batch:
+                    title = item.get("title", "")
+                    if title and title not in all_items:
+                        all_items[title] = item
+            items = list(all_items.values())[:count]
+            print(f"[热榜] 合并去重后 {len(items)} 条话题")
             topics = []
             import re
             def _clean(s: str) -> str:
