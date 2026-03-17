@@ -433,7 +433,7 @@ export default function DebateDetailPage({ params }: { params: Promise<{ id: str
                 </button>
 
                 {/* 观点出圈 notification */}
-                {(debate as Record<string, unknown>).zhihu_post && (
+                {(debate as unknown as Record<string, unknown>).zhihu_post && (
                   <div className="mt-3 bg-gradient-to-r from-[#E8F0FE] to-[#F0F4FF] rounded-xl border border-[#D0E0FE] p-4">
                     <div className="flex items-center gap-2 mb-2">
                       <span className="text-lg">🌊</span>
