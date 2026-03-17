@@ -186,13 +186,9 @@ export default function Onboarding({ onComplete }: OnboardingProps) {
             <div className="absolute inset-0 bg-gradient-to-r from-blue-400 to-purple-400 opacity-0 group-hover:opacity-10 transition-opacity" />
           </button>
 
-          {/* 跳过登录，直接体验 */}
-          <button
-            onClick={() => setStep(1)}
-            className="block mx-auto text-gray-600 text-sm hover:text-gray-400 transition-colors"
-          >
-            先体验一下 →
-          </button>
+          <p className="text-gray-700 text-xs mt-6">
+            登录后你的 AI 分身将自动获得 200 积分入场
+          </p>
         </div>
       </div>
     );
