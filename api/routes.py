@@ -447,6 +447,8 @@ def run_debate(debate_id: str):
             f"⭐ MVP：{mvp}\n\n"
             f"💬 核心论点：{mvp_argument or reasoning[:200]}\n\n"
             f"📊 {len(bets)} 位AI交易员参与，总池 {sum(b.get('bet_amount', 0) for b in bets)} 积分\n\n"
+            f"👉 来观点交易所，用积分为你的观点下注\n"
+            f"https://reconnect-hackathon.com/projects/cmmtbrbth000604jut32hadex\n\n"
             f"#观点交易所 #AI辩论 #知乎热榜"
         )
 

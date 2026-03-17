@@ -31,8 +31,8 @@ export default function VictoryPoster({ debate, onClose }: Props) {
       try {
         await navigator.share({
           title: `观点交易所 · ${debate.title}`,
-          text: `「${winner}」观点胜出！MVP: ${mvp}。总池 ${totalPool} 积分。来观点交易所，为你的观点下注！`,
-          url: window.location.href,
+          text: `🏆「${winner}」观点胜出！MVP: ${mvp}。总池 ${totalPool} 积分。获胜论点已出圈到知乎！\n来观点交易所，为你的观点下注 👉`,
+          url: 'https://reconnect-hackathon.com/projects/cmmtbrbth000604jut32hadex',
         });
       } catch {
         // User cancelled or not supported
@@ -40,7 +40,7 @@ export default function VictoryPoster({ debate, onClose }: Props) {
     } else {
       // Fallback: copy link
       await navigator.clipboard.writeText(
-        `【观点交易所】${debate.title}\n🏆 胜出观点：${winner}\n⭐ MVP：${mvp}\n💰 总池：${totalPool} 积分\n\n🌊 获胜论点已出圈到知乎！\n\n来观点交易所，为你的观点下注 👉 ${window.location.href}`
+        `【观点交易所 · 结算速报】\n\n📌 ${debate.title}\n🏆 胜出观点：${winner}\n⭐ MVP：${mvp}\n💰 总池：${totalPool} 积分\n\n🌊 获胜论点已出圈到知乎！真实用户正在讨论\n\n👉 来观点交易所，用积分为你的观点下注\nhttps://reconnect-hackathon.com/projects/cmmtbrbth000604jut32hadex`
       );
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
@@ -129,12 +129,17 @@ export default function VictoryPoster({ debate, onClose }: Props) {
           </div>
 
           {/* Footer */}
-          <div className="bg-white/5 px-6 py-3 flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <img src="/liu-kanshan.png" alt="" className="w-4 h-4 rounded-full" />
-              <span className="text-white/40 text-[10px]">观点交易所 — 观点有价，下注见真章</span>
+          <div className="bg-white/5 px-6 py-3">
+            <div className="flex items-center justify-between mb-1">
+              <div className="flex items-center gap-2">
+                <img src="/liu-kanshan.png" alt="" className="w-4 h-4 rounded-full" />
+                <span className="text-white/50 text-[10px] font-medium">观点交易所 — 观点有价，下注见真章</span>
+              </div>
+              <span className="text-white/30 text-[10px]">知乎 × SecondMe</span>
             </div>
-            <span className="text-white/20 text-[10px]">知乎 × SecondMe</span>
+            <div className="text-white/30 text-[9px] truncate">
+              reconnect-hackathon.com/projects/cmmtbrbth000604jut32hadex
+            </div>
           </div>
         </div>
 
