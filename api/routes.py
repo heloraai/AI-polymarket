@@ -556,3 +556,49 @@ def get_leaderboard():
     return {"leaderboard": leaderboard}
 
 
+@router.post("/recycle-completed")
+def recycle_completed():
+    """把已结算辩论复制为新的可买入辩论，置顶热榜。"""
+    import uuid as _uuid
+    from services.pricing import calculate_option_prices as _calc
+
+    debates = load_debates()
+    completed = [d for d in debates.values() if d.get("status") == "completed"]
+
+    created_count = 0
+    for old in completed:
+        new_id = _uuid.uuid4().hex[:8]
+        options = old.get("options", [])
+        option_keys = [o["key"] for o in options]
+        agents_clean = [
+            {"id": a["id"], "name": a["name"], "emoji": a["emoji"], "description": a["description"]}
+            for a in old.get("agents", [])
+            if not a.get("is_user_agent")
+        ]
+
+        debates[new_id] = {
+            "id": new_id,
+            "title": old["title"],
+            "options": options,
+            "context": old.get("context", ""),
+            "category": old.get("category", "zhihu_hotlist"),
+            "status": "created",
+            "phase": "",
+            "agents": agents_clean,
+            "transcript": [],
+            "bets": [],
+            "market_prices": _calc(option_keys, [], seed=old["title"]),
+            "team_defense_messages": [],
+            "judgment": None,
+            "payouts": None,
+            "created_at": datetime.now().isoformat(),
+            "source": "recycled",
+        }
+        created_count += 1
+
+    from services.persistence import save_debates
+    save_debates(debates)
+
+    return {"message": f"复制 {created_count} 个已结算辩论为新辩论，已置顶热榜"}
+
+
