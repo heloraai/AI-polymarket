@@ -121,21 +121,15 @@ export default function DebateDetailPage({ params }: { params: Promise<{ id: str
   useEffect(() => {
     if (!debate) return;
     const total = debate.transcript.length;
-    if (total <= visibleMsgCount) return;
+    if (total === 0 || total <= visibleMsgCount) return;
 
-    // Reveal messages one by one with delay
-    const timer = setInterval(() => {
-      setVisibleMsgCount(prev => {
-        if (prev >= total) {
-          clearInterval(timer);
-          return prev;
-        }
-        return prev + 1;
-      });
-    }, 800); // 800ms between each message
+    // Reveal one message, then schedule next via setTimeout chain
+    const timer = setTimeout(() => {
+      setVisibleMsgCount(prev => prev + 1);
+    }, 800);
 
-    return () => clearInterval(timer);
-  }, [debate?.transcript.length, visibleMsgCount]);
+    return () => clearTimeout(timer);
+  }, [debate?.transcript.length, visibleMsgCount]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Auto-popup victory poster when debate finishes and user won
   useEffect(() => {
@@ -501,37 +495,53 @@ export default function DebateDetailPage({ params }: { params: Promise<{ id: str
 
               {/* Messages appearing one by one */}
               <div className="max-h-[500px] overflow-y-auto" id="debate-scroll">
-                {Object.entries(phases).map(([phase, messages]) => (
-                  <div key={phase}>
-                    <div className="sticky top-0 z-10 px-4 py-2 bg-[#FAFAFA] border-b border-[#EBEBEB]">
-                      <span className="text-xs font-semibold text-[#8590A6] uppercase tracking-wider">{phase}</span>
+                {(() => {
+                  let globalIdx = 0;
+                  return Object.entries(phases).map(([phase, messages]) => (
+                    <div key={phase}>
+                      {(() => {
+                        // Check if any message in this phase is visible
+                        const phaseStartIdx = globalIdx;
+                        const phaseEndIdx = phaseStartIdx + messages.length;
+                        const anyVisible = phaseStartIdx < visibleMsgCount;
+                        if (!anyVisible) {
+                          globalIdx = phaseEndIdx;
+                          return null;
+                        }
+                        return (
+                          <>
+                            <div className="sticky top-0 z-10 px-4 py-2 bg-[#FAFAFA] border-b border-[#EBEBEB]">
+                              <span className="text-xs font-semibold text-[#8590A6] uppercase tracking-wider">{phase}</span>
+                            </div>
+                            {messages.map((msg, i) => {
+                              const idx = globalIdx++;
+                              const isVisible = idx < visibleMsgCount;
+                              const isNew = idx === visibleMsgCount - 1;
+                              if (!isVisible) return null;
+                              return (
+                                <div
+                                  key={`${phase}-${i}`}
+                                  className={`transition-all duration-700 ${isNew ? 'opacity-0 animate-slide-down' : 'opacity-100'}`}
+                                  style={isNew ? { animationFillMode: 'forwards' } : undefined}
+                                >
+                                  <RoundtableComment
+                                    agent={msg.agent}
+                                    content={msg.content}
+                                    phase={phase}
+                                    targetAgent={msg.target_agent}
+                                    defected={msg.defected}
+                                    oldLabel={msg.old_label}
+                                    newLabel={msg.new_label}
+                                  />
+                                </div>
+                              );
+                            })}
+                          </>
+                        );
+                      })()}
                     </div>
-                    {messages.map((msg, i) => {
-                      const globalIdx = debate.transcript.indexOf(msg);
-                      const isVisible = globalIdx < visibleMsgCount;
-                      const isNew = globalIdx === visibleMsgCount - 1;
-
-                      if (!isVisible) return null;
-
-                      return (
-                        <div
-                          key={`${phase}-${i}`}
-                          className={`transition-all duration-500 ${isNew ? 'animate-slide-down' : ''}`}
-                        >
-                          <RoundtableComment
-                            agent={msg.agent}
-                            content={msg.content}
-                            phase={phase}
-                            targetAgent={msg.target_agent}
-                            defected={msg.defected}
-                            oldLabel={msg.old_label}
-                            newLabel={msg.new_label}
-                          />
-                        </div>
-                      );
-                    })}
-                  </div>
-                ))}
+                  ));
+                })()}
               </div>
             </div>
           )}
