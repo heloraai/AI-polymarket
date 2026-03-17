@@ -1,10 +1,13 @@
 'use client';
 
+import { useState } from 'react';
 import Link from 'next/link';
 import { getAgent, OPTION_COLORS } from '@/lib/constants';
 import type { Debate } from '@/lib/types';
 
 export default function DebateCard({ debate }: { debate: Debate }) {
+  const [selectedIdx, setSelectedIdx] = useState<number | null>(null);
+  const [buying, setBuying] = useState(false);
   const isFinished = debate.status === 'finished';
   const hasBets = debate.bets.length > 0;
   const totalBet = debate.bets.reduce((sum, b) => sum + b.amount, 0);
@@ -70,7 +73,17 @@ export default function DebateCard({ debate }: { debate: Debate }) {
           {optionStats.map((opt, i) => (
             <div
               key={i}
+              onClick={(e) => {
+                if (debate.status !== 'created') return;
+                e.preventDefault();
+                e.stopPropagation();
+                setSelectedIdx(selectedIdx === i ? null : i);
+              }}
               className={`relative rounded-lg overflow-hidden transition-all duration-300 ${
+                debate.status === 'created' ? 'cursor-pointer' : ''
+              } ${
+                selectedIdx === i ? 'ring-2 ring-[#0066FF]' : ''
+              } ${
                 opt.isWinner ? 'ring-1 ring-[#00C853]/40 bg-[#F1FFF6]'
                 : opt.isLoser ? 'opacity-60 bg-[#FAFAFA]'
                 : 'bg-[#F8F9FA]'
@@ -133,13 +146,63 @@ export default function DebateCard({ debate }: { debate: Debate }) {
           </div>
           <div className="flex items-center gap-2">
             {debate.status === 'created' && (
-              <Link
-                href={`/debate/${debate.id}`}
-                onClick={(e) => e.stopPropagation()}
-                className="px-3 py-1.5 bg-[#0066FF] text-white text-xs font-medium rounded-full hover:bg-[#0052CC] transition-all active:scale-95"
+              <button
+                onClick={async (e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  if (selectedIdx === null) return;
+                  setBuying(true);
+                  try {
+                    const userId = localStorage.getItem('arena_user_id') || crypto.randomUUID();
+                    localStorage.setItem('arena_user_id', userId);
+                    const personality = localStorage.getItem('arena_personality') || '';
+                    const labels: Record<string, string> = {
+                      rational: '理性分析，数据说话',
+                      idealist: '关心公平正义，理想主义',
+                      pragmatist: '务实派，看重可操作性',
+                      skeptic: '质疑派，对主流保持警惕',
+                    };
+                    // Join
+                    await fetch(`/api/debates/${debate.id}/join`, {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({
+                        user_id: userId,
+                        user_name: '我的分身',
+                        personality_override: labels[personality] || '理性思考，独立判断',
+                      }),
+                    }).catch(() => {});
+                    // Buy
+                    const res = await fetch(`/api/wallet/${userId}/buy`, {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({
+                        debate_id: debate.id,
+                        option_key: `option_${selectedIdx}`,
+                        quantity: 1,
+                      }),
+                    });
+                    if (res.ok) {
+                      window.location.href = `/debate/${debate.id}?spectating=true`;
+                    } else {
+                      const err = await res.json();
+                      alert(err.error || err.detail || '买入失败');
+                      setBuying(false);
+                    }
+                  } catch {
+                    alert('网络错误');
+                    setBuying(false);
+                  }
+                }}
+                disabled={selectedIdx === null || buying}
+                className={`px-3 py-1.5 text-xs font-medium rounded-full transition-all active:scale-95 ${
+                  selectedIdx !== null && !buying
+                    ? 'bg-[#0066FF] text-white hover:bg-[#0052CC]'
+                    : 'bg-[#EBEBEB] text-[#999] cursor-not-allowed'
+                }`}
               >
-                💰 买入观点
-              </Link>
+                {buying ? '买入中...' : selectedIdx !== null ? `💰 买入「${debate.options[selectedIdx]}」` : '💰 先选择观点'}
+              </button>
             )}
             <Link href={`/debate/${debate.id}`} className="text-xs text-[#0066FF] font-medium hover:underline">
               {debate.status === 'created' ? '详情' : debate.status === 'running' ? '观战 →' : '查看结算 →'}

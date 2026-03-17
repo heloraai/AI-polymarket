@@ -46,7 +46,18 @@ export default function DebateDetailPage({ params }: { params: Promise<{ id: str
   const [showPoster, setShowPoster] = useState(false);
   const [spectating, setSpectating] = useState(false);
   const [prevTranscriptLen, setPrevTranscriptLen] = useState(0);
+  const [visibleMsgCount, setVisibleMsgCount] = useState(0);
   const { wallet, buyShares: walletBuyShares, refresh: refreshWallet } = useWallet();
+
+  // Check if coming from card buy
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get('spectating') === 'true') {
+        setSpectating(true);
+      }
+    }
+  }, []);
 
   const handleBuyShares = async (optionKey: string, quantity: number) => {
     try {
@@ -105,6 +116,26 @@ export default function DebateDetailPage({ params }: { params: Promise<{ id: str
       }
     }
   }, [debate?.transcript.length, prevTranscriptLen]);
+
+  // Gradually reveal messages for animation effect
+  useEffect(() => {
+    if (!debate) return;
+    const total = debate.transcript.length;
+    if (total <= visibleMsgCount) return;
+
+    // Reveal messages one by one with delay
+    const timer = setInterval(() => {
+      setVisibleMsgCount(prev => {
+        if (prev >= total) {
+          clearInterval(timer);
+          return prev;
+        }
+        return prev + 1;
+      });
+    }, 800); // 800ms between each message
+
+    return () => clearInterval(timer);
+  }, [debate?.transcript.length, visibleMsgCount]);
 
   // Auto-popup victory poster when debate finishes and user won
   useEffect(() => {
@@ -475,18 +506,30 @@ export default function DebateDetailPage({ params }: { params: Promise<{ id: str
                     <div className="sticky top-0 z-10 px-4 py-2 bg-[#FAFAFA] border-b border-[#EBEBEB]">
                       <span className="text-xs font-semibold text-[#8590A6] uppercase tracking-wider">{phase}</span>
                     </div>
-                    {messages.map((msg, i) => (
-                      <RoundtableComment
-                        key={`${phase}-${i}`}
-                        agent={msg.agent}
-                        content={msg.content}
-                        phase={phase}
-                        targetAgent={msg.target_agent}
-                        defected={msg.defected}
-                        oldLabel={msg.old_label}
-                        newLabel={msg.new_label}
-                      />
-                    ))}
+                    {messages.map((msg, i) => {
+                      const globalIdx = debate.transcript.indexOf(msg);
+                      const isVisible = globalIdx < visibleMsgCount;
+                      const isNew = globalIdx === visibleMsgCount - 1;
+
+                      if (!isVisible) return null;
+
+                      return (
+                        <div
+                          key={`${phase}-${i}`}
+                          className={`transition-all duration-500 ${isNew ? 'animate-slide-down' : ''}`}
+                        >
+                          <RoundtableComment
+                            agent={msg.agent}
+                            content={msg.content}
+                            phase={phase}
+                            targetAgent={msg.target_agent}
+                            defected={msg.defected}
+                            oldLabel={msg.old_label}
+                            newLabel={msg.new_label}
+                          />
+                        </div>
+                      );
+                    })}
                   </div>
                 ))}
               </div>
