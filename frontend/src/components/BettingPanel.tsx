@@ -44,11 +44,11 @@ export default function BettingPanel({ debate, onBet }: Props) {
       {/* Header */}
       <div className="px-4 py-3 border-b border-[#F0F0F0] bg-[#FAFAFA]">
         <h3 className="text-sm font-semibold text-[#1A1A1A]">
-          {isFinished ? '最终结果' : '选择你的观点'}
+          {isFinished ? '结算完成' : '观点交易台'}
         </h3>
         {!isFinished && (
           <p className="text-[11px] text-[#8590A6] mt-0.5">
-            选中一个立场，下注支持你的判断
+            选中一个观点，用积分为你的判断买单
           </p>
         )}
       </div>
@@ -97,11 +97,11 @@ export default function BettingPanel({ debate, onBet }: Props) {
 
               <div className="text-right">
                 <span className="text-2xl font-bold tabular-nums" style={{ color: opt.color }}>
-                  {opt.price}¢
+                  {opt.price}分
                 </span>
                 {!isFinished && (
                   <span className="block text-[10px] text-[#8590A6]">
-                    赢得 {100 - opt.price}¢ 利润
+                    赢得 {100 - opt.price} 积分利润
                   </span>
                 )}
               </div>
@@ -147,7 +147,7 @@ export default function BettingPanel({ debate, onBet }: Props) {
             onClick={() => onBet?.(debate.options[selectedOption], betAmount)}
             className="w-full py-3 bg-[#0066FF] text-white font-semibold rounded-xl hover:bg-[#0052CC] transition-all active:scale-[0.98]"
           >
-            下注 {betAmount} 积分 · 支持「{selectedStat?.name}」
+            买入「{selectedStat?.name}」· {betAmount} 积分
           </button>
         </div>
       )}

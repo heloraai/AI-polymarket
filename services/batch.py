@@ -83,6 +83,8 @@ def _create_debates_from_hotlist(
                 "title": title,
                 "options": options,
                 "context": topic.get("detail_text", ""),
+                "source": "zhihu_hotlist",
+                "source_token": topic.get("question_token", ""),
                 "category": "zhihu_hotlist",
                 "status": "created",
                 "phase": "",

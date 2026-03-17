@@ -105,7 +105,7 @@ export default function DebateCard({ debate }: { debate: Debate }) {
                       })}
                     </div>
                   )}
-                  <span className="text-lg md:text-xl font-bold tabular-nums" style={{ color: opt.color }}>{opt.price}¢</span>
+                  <span className="text-lg md:text-xl font-bold tabular-nums" style={{ color: opt.color }}>{opt.price}分</span>
                 </div>
               </div>
             </div>

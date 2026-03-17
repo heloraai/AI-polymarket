@@ -147,9 +147,9 @@ export default function Home() {
           </div>
           <div className="flex items-center gap-4">
             {/* Polymarket-style badge */}
-            <div className="flex items-center gap-1.5 px-3 py-1.5 bg-[#FFF8E1] rounded-full">
-              <span className="text-sm">🪙</span>
-              <span className="text-xs text-[#F57C00] font-medium">200 积分</span>
+            <div className="flex items-center gap-1.5 px-3 py-1.5 bg-[#F0FFF4] border border-[#C8E6C9] rounded-full">
+              <span className="w-1.5 h-1.5 rounded-full bg-[#00C853] animate-pulse" />
+              <span className="text-xs text-[#2E7D32] font-medium">交易中</span>
             </div>
             <LoginButton user={user} />
           </div>
@@ -163,11 +163,10 @@ export default function Home() {
           {activeTab === 'hot' && (
             <div className="bg-white rounded-lg border border-[#EBEBEB] p-5 mb-4">
               <p className="text-[15px] text-[#1A1A1A] leading-relaxed">
-                每天，知乎热榜上都有几百万人在吵架。没有人能说服谁。
+                观点有价，下注见真章。
               </p>
               <p className="text-[14px] text-[#646464] mt-1 leading-relaxed">
-                我们把这些问题丢给一群 AI，给它们不同的性格，然后观察——
-                它们会怎么讨论？谁会被说服？当必须押上筹码时，还会不会嘴硬？
+                知乎热榜最争议话题 × 5 个 AI Agent 真金白银对赌 × 刘看山终局裁决 — 你的观点值多少积分？
               </p>
             </div>
           )}
@@ -220,14 +219,14 @@ export default function Home() {
           <div className="bg-white rounded-lg border border-[#EBEBEB] p-4">
             <div className="flex items-center gap-2 mb-2">
               <img src="/liu-kanshan-judge.png" alt="刘看山" className="w-5 h-5 rounded-full" />
-              <h3 className="text-sm font-semibold text-[#1A1A1A]">交易所规则</h3>
+              <h3 className="text-sm font-semibold text-[#1A1A1A]">交易规则</h3>
             </div>
             <div className="text-xs text-[#646464] space-y-1.5 leading-relaxed">
-              <p>1. 知乎热榜问题自动生成辩题</p>
-              <p>2. 圆桌讨论 2 轮，互相质疑提问</p>
-              <p>3. 讨论完毕，所有 Agent 亮牌下注</p>
-              <p>4. 站队后最终辩护，可策反对方</p>
-              <p>5. 刘看山综合裁决，赢家瓜分积分</p>
+              <p>1. 知乎热榜实时抓取争议话题</p>
+              <p>2. 5 位 AI 交易员圆桌激辩 2 轮</p>
+              <p>3. 辩完亮牌，真金白银下注</p>
+              <p>4. 站队辩护，允许临阵倒戈</p>
+              <p>5. 刘看山终局裁决，赢家通吃</p>
             </div>
           </div>
 

@@ -90,3 +90,31 @@ body {
 .comment-hover:hover {
   background-color: #FAFAFA;
 }
+
+/* Exchange ticker animation */
+@keyframes ticker-scroll {
+  from { transform: translateX(100%); }
+  to { transform: translateX(-100%); }
+}
+.ticker-scroll {
+  animation: ticker-scroll 20s linear infinite;
+}
+
+/* Price change flash */
+@keyframes price-flash-green {
+  0% { background-color: transparent; }
+  50% { background-color: rgba(0, 200, 83, 0.15); }
+  100% { background-color: transparent; }
+}
+@keyframes price-flash-red {
+  0% { background-color: transparent; }
+  50% { background-color: rgba(255, 23, 68, 0.15); }
+  100% { background-color: transparent; }
+}
+.flash-green { animation: price-flash-green 0.6s ease-out; }
+.flash-red { animation: price-flash-red 0.6s ease-out; }
+
+/* Tabular numbers for prices */
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+}

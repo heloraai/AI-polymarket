@@ -105,6 +105,26 @@ export default function DebateDetailPage({ params }: { params: Promise<{ id: str
       <div className="max-w-5xl mx-auto px-4 md:px-6 py-4 md:py-6 flex flex-col lg:flex-row gap-4 md:gap-6">
         {/* Left: Transcript + Ruling */}
         <div className="flex-1 min-w-0">
+          {/* Market status bar */}
+          <div className="bg-white rounded-xl border border-[#EBEBEB] p-3 mb-4 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${
+                isFinished ? 'bg-[#E8F5E9] text-[#2E7D32]' : 'bg-[#FFF3E0] text-[#E65100]'
+              }`}>
+                <span className={`w-1.5 h-1.5 rounded-full ${isFinished ? 'bg-[#2E7D32]' : 'bg-[#E65100] animate-pulse'}`} />
+                {isFinished ? '已结算' : '交易进行中'}
+              </div>
+              {debate.bets.length > 0 && (
+                <span className="text-xs text-[#8590A6]">
+                  {debate.bets.length} 位交易员 · 总池 {debate.bets.reduce((s, b) => s + b.amount, 0)} 积分
+                </span>
+              )}
+            </div>
+            {isFinished && debate.result && (
+              <span className="text-xs font-semibold text-[#00C853]">胜出观点：{debate.result}</span>
+            )}
+          </div>
+
           {/* Description */}
           {debate.description && (
             <div className="bg-white rounded-xl border border-[#EBEBEB] p-4 md:p-5 mb-4">

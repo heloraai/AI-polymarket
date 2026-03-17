@@ -121,9 +121,14 @@ def run_phase1_roundtable(
             context = build_transcript_context(transcript)
 
             if round_num == 1:
+                # Include Zhihu answer data if available in context
+                zhihu_context = debate.get('context', '')
+                if zhihu_context:
+                    zhihu_context = f"以下是知乎社区对这个话题的真实讨论：\n{zhihu_context}"
+
                 user_content = (
                     f"辩题：「{debate['title']}」\n\n"
-                    f"背景信息：{debate.get('context', '')}\n\n"
+                    f"{zhihu_context}\n\n"
                     f"可选立场：\n{options_text}\n\n"
                     f"{'之前的发言：' + chr(10) + context + chr(10) if context else ''}"
                     f"这是圆桌讨论{round_label}。请发表你对这个辩题的初步看法，"

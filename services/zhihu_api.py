@@ -13,7 +13,12 @@ import hmac
 import time
 import uuid
 
+import threading
+
 import httpx
+
+_search_lock = threading.Lock()
+_last_search_time = 0.0
 
 from config import ZHIHU_OPENAPI_BASE, ZHIHU_APP_KEY, ZHIHU_APP_SECRET
 
@@ -66,6 +71,14 @@ def fetch_billboard(top_cnt: int = 50, publish_in_hours: int = 48) -> list[dict]
 
 def search_global(query: str, count: int = 10) -> list[dict]:
     """全网可信搜 (API 3)。"""
+    global _last_search_time
+    with _search_lock:
+        now = time.time()
+        elapsed = now - _last_search_time
+        if elapsed < 1.1:
+            time.sleep(1.1 - elapsed)
+        _last_search_time = time.time()
+
     headers = _generate_sign_headers()
     resp = httpx.get(
         f"{ZHIHU_OPENAPI_BASE}/openapi/search/global",
