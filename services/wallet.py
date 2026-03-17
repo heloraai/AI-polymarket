@@ -20,7 +20,12 @@ def get_or_create_wallet(user_id: str, user_name: str = "") -> dict:
     """获取或创建用户钱包。"""
     wallets = load_wallets()
     if user_id in wallets:
-        return wallets[user_id]
+        wallet = wallets[user_id]
+        # 修复旧钱包：如果没有 initial_balance，用当前余额作为基准
+        if "initial_balance" not in wallet:
+            wallet["initial_balance"] = wallet.get("balance", INITIAL_USER_BALANCE)
+            save_wallet(wallet)
+        return wallet
 
     wallet = {
         "user_id": user_id,
