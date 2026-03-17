@@ -40,7 +40,7 @@ export default function VictoryPoster({ debate, onClose }: Props) {
     } else {
       // Fallback: copy link
       await navigator.clipboard.writeText(
-        `【观点交易所】${debate.title}\n胜出观点：${winner}\nMVP：${mvp}\n总池：${totalPool} 积分\n\n来观点交易所，为你的观点下注 👉 ${window.location.href}`
+        `【观点交易所】${debate.title}\n🏆 胜出观点：${winner}\n⭐ MVP：${mvp}\n💰 总池：${totalPool} 积分\n\n🌊 获胜论点已出圈到知乎！\n\n来观点交易所，为你的观点下注 👉 ${window.location.href}`
       );
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
@@ -115,6 +115,17 @@ export default function VictoryPoster({ debate, onClose }: Props) {
               <div className="text-white text-lg font-bold">{debate.transcript.length}</div>
               <div className="text-white/40 text-[10px]">辩论发言</div>
             </div>
+          </div>
+
+          {/* 观点出圈 status */}
+          <div className="mx-6 mb-4 bg-gradient-to-r from-[#0066FF]/10 to-[#0066FF]/5 border border-[#0066FF]/20 rounded-xl px-4 py-3">
+            <div className="flex items-center gap-2 mb-1">
+              <span className="text-base">🌊</span>
+              <span className="text-white/90 text-sm font-medium">观点已出圈</span>
+            </div>
+            <p className="text-white/60 text-xs leading-relaxed">
+              获胜论点已自动发布到知乎圈子，真实用户正在看到你的观点
+            </p>
           </div>
 
           {/* Footer */}

@@ -425,6 +425,43 @@ def run_debate(debate_id: str):
     from services.wallet import settle_holdings_for_debate
     settle_holdings_for_debate(debate_id)
 
+    # 观点出圈：获胜论点自动发布到知乎圈子
+    try:
+        from services.zhihu_api import publish_to_zhihu_circle
+        winning_label = judgment.get("winning_label", "")
+        mvp = judgment.get("mvp", "")
+        reasoning = judgment.get("reasoning", "")[:300]
+
+        # Find MVP's argument from transcript
+        mvp_argument = ""
+        for msg in transcript:
+            agent_name = msg.get("agent_name", "")
+            if agent_name == mvp and msg.get("phase", "").startswith("圆桌讨论"):
+                mvp_argument = msg.get("content", "")[:200]
+                break
+
+        post_content = (
+            f"【观点交易所 · AI辩论速报】\n\n"
+            f"📌 辩题：{debate['title']}\n\n"
+            f"🏆 胜出观点：{winning_label}\n"
+            f"⭐ MVP：{mvp}\n\n"
+            f"💬 核心论点：{mvp_argument or reasoning[:200]}\n\n"
+            f"📊 {len(bets)} 位AI交易员参与，总池 {sum(b.get('bet_amount', 0) for b in bets)} 积分\n\n"
+            f"#观点交易所 #AI辩论 #知乎热榜"
+        )
+
+        publish_result = publish_to_zhihu_circle(post_content)
+        if publish_result:
+            debate["zhihu_post"] = {
+                "published": True,
+                "post_id": publish_result.get("pin_id", ""),
+                "content": post_content,
+                "published_at": datetime.now().isoformat(),
+            }
+            save_debate(debate)
+    except Exception as e:
+        print(f"[观点出圈] Failed: {e}")
+
     return debate
 
 

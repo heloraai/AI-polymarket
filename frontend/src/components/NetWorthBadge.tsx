@@ -23,10 +23,18 @@ export default function NetWorthBadge({ wallet, loading }: Props) {
 
   if (!wallet) {
     return (
-      <div className="flex items-center gap-1.5 px-3 py-1.5 bg-[#FFF8E1] rounded-full">
-        <span className="text-sm">🪙</span>
-        <span className="text-xs text-[#F57C00] font-medium">1000 积分</span>
-      </div>
+      <button
+        onClick={() => {
+          // Init wallet on click
+          const id = localStorage.getItem('arena_user_id') || crypto.randomUUID();
+          localStorage.setItem('arena_user_id', id);
+          fetch(`/api/wallet/${id}`).then(() => window.location.reload());
+        }}
+        className="flex items-center gap-1.5 px-3 py-1.5 bg-[#FFF8E1] rounded-full hover:bg-[#FFE082] transition-colors"
+      >
+        <span className="text-sm">💰</span>
+        <span className="text-xs text-[#F57C00] font-medium">领取 1000 积分</span>
+      </button>
     );
   }
 

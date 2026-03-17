@@ -1,17 +1,17 @@
-"""LLM 调用工具 — 支持 DeepSeek (Web) 和 Anthropic (CLI)"""
+"""LLM 调用工具 — 支持 MiniMax (Web) 和 Anthropic (CLI)"""
 
 import json
 
 from openai import OpenAI
 
-from config import DEEPSEEK_API_KEY, DEEPSEEK_BASE_URL, DEEPSEEK_MODEL
+from config import MINIMAX_API_KEY, MINIMAX_BASE_URL, MINIMAX_MODEL
 
 
 def get_deepseek_client() -> OpenAI:
-    """获取 DeepSeek 客户端（Web 模式）。"""
-    if not DEEPSEEK_API_KEY:
-        raise RuntimeError("DEEPSEEK_API_KEY environment variable is not set")
-    return OpenAI(api_key=DEEPSEEK_API_KEY, base_url=DEEPSEEK_BASE_URL)
+    """获取 MiniMax 客户端（兼容 OpenAI SDK）。"""
+    if not MINIMAX_API_KEY:
+        raise RuntimeError("MINIMAX_API_KEY environment variable is not set")
+    return OpenAI(api_key=MINIMAX_API_KEY, base_url=MINIMAX_BASE_URL)
 
 
 def call_llm(
@@ -23,7 +23,7 @@ def call_llm(
     """调用 LLM 并返回文本响应。"""
     full_messages = [{"role": "system", "content": system_prompt}] + messages
     response = client.chat.completions.create(
-        model=DEEPSEEK_MODEL,
+        model=MINIMAX_MODEL,
         max_tokens=max_tokens,
         messages=full_messages,
     )

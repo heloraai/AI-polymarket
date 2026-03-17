@@ -9,6 +9,34 @@ import { getAgent } from '@/lib/constants';
 import type { Debate, Message } from '@/lib/types';
 import { useWallet } from '@/hooks/useWallet';
 
+function decodeHtmlEntities(text: string): string {
+  const textarea = typeof document !== 'undefined' ? document.createElement('textarea') : null;
+  if (!textarea) return text.replace(/&#(\d+);/g, (_, n) => String.fromCharCode(Number(n))).replace(/&quot;/g, '"').replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>');
+  textarea.innerHTML = text;
+  return textarea.value;
+}
+
+function DescriptionBlock({ text }: { text: string }) {
+  const [expanded, setExpanded] = useState(false);
+  const decoded = decodeHtmlEntities(text);
+  const isLong = decoded.length > 200;
+  const displayText = isLong && !expanded ? decoded.slice(0, 200) + '...' : decoded;
+
+  return (
+    <div className="bg-white rounded-xl border border-[#EBEBEB] p-4 md:p-5 mb-4">
+      <p className="text-[14px] text-[#646464] leading-relaxed whitespace-pre-wrap">{displayText}</p>
+      {isLong && (
+        <button
+          onClick={() => setExpanded(!expanded)}
+          className="mt-2 text-xs text-[#0066FF] hover:underline"
+        >
+          {expanded ? '收起' : '展开全文'}
+        </button>
+      )}
+    </div>
+  );
+}
+
 export default function DebateDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const [debate, setDebate] = useState<Debate | null>(null);
@@ -179,9 +207,7 @@ export default function DebateDetailPage({ params }: { params: Promise<{ id: str
 
           {/* Description */}
           {debate.description && (
-            <div className="bg-white rounded-xl border border-[#EBEBEB] p-4 md:p-5 mb-4">
-              <p className="text-[15px] text-[#646464] leading-relaxed">{debate.description}</p>
-            </div>
+            <DescriptionBlock text={debate.description} />
           )}
 
           {/* Tab navigation */}
@@ -465,6 +491,22 @@ export default function DebateDetailPage({ params }: { params: Promise<{ id: str
                 >
                   📤 生成结算海报
                 </button>
+
+                {/* 观点出圈 notification */}
+                {(debate as Record<string, unknown>).zhihu_post && (
+                  <div className="mt-3 bg-gradient-to-r from-[#E8F0FE] to-[#F0F4FF] rounded-xl border border-[#D0E0FE] p-4">
+                    <div className="flex items-center gap-2 mb-2">
+                      <span className="text-lg">🌊</span>
+                      <span className="text-sm font-bold text-[#0066FF]">观点已出圈</span>
+                    </div>
+                    <p className="text-xs text-[#646464] leading-relaxed">
+                      获胜论点已自动发布到知乎圈子，真实知乎用户正在看到、讨论这个观点
+                    </p>
+                    <div className="mt-2 text-[10px] text-[#8590A6]">
+                      你的 AI 分身正在替你影响真实世界的舆论
+                    </div>
+                  </div>
+                )}
               </>
             )}
           </div>

@@ -29,7 +29,7 @@ export default function DebateCard({ debate }: { debate: Debate }) {
   });
 
   return (
-    <Link href={`/debate/${debate.id}`} className="block">
+    <div className="block">
       <div className={`bg-white rounded-xl overflow-hidden border transition-all duration-300 ${
         isFinished ? 'border-[#E0E0E0]' : 'border-[#EBEBEB] hover:shadow-md hover:border-[#D0D0D0]'
       }`}>
@@ -37,9 +37,11 @@ export default function DebateCard({ debate }: { debate: Debate }) {
         <div className="p-4 md:p-5 pb-3">
           <div className="flex items-start gap-3">
             <div className="flex-1 min-w-0">
-              <h3 className="text-[16px] md:text-[17px] font-semibold text-[#1A1A1A] leading-relaxed hover:text-[#0066FF] transition-colors">
-                {debate.title}
-              </h3>
+              <Link href={`/debate/${debate.id}`}>
+                <h3 className="text-[16px] md:text-[17px] font-semibold text-[#1A1A1A] leading-relaxed hover:text-[#0066FF] transition-colors">
+                  {debate.title}
+                </h3>
+              </Link>
               {debate.description && (
                 <p className="text-[13px] text-[#8590A6] mt-0.5 truncate">{debate.description}</p>
               )}
@@ -129,9 +131,27 @@ export default function DebateCard({ debate }: { debate: Debate }) {
             {debate.transcript.length > 0 && hasBets && <span>·</span>}
             {hasBets && <span>{debate.bets.length} 笔下注</span>}
           </div>
-          <span className="text-xs text-[#0066FF] font-medium">查看详情 →</span>
+          <div className="flex items-center gap-2">
+            {debate.status === 'created' && (
+              <button
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  fetch(`/api/debates/${debate.id}/run`, { method: 'POST' })
+                    .then(() => window.location.reload())
+                    .catch(() => alert('启动失败'));
+                }}
+                className="px-3 py-1.5 bg-[#0066FF] text-white text-xs font-medium rounded-full hover:bg-[#0052CC] transition-all active:scale-95"
+              >
+                ⚔️ 开始辩论
+              </button>
+            )}
+            <Link href={`/debate/${debate.id}`} className="text-xs text-[#0066FF] font-medium hover:underline">
+              查看详情 →
+            </Link>
+          </div>
         </div>
       </div>
-    </Link>
+    </div>
   );
 }

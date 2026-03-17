@@ -10,10 +10,10 @@ load_dotenv()
 # CLI 模式使用 Anthropic (Claude)
 ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY", "")
 
-# Web 模式使用 DeepSeek
-DEEPSEEK_API_KEY = os.getenv("DEEPSEEK_API_KEY", "")
-DEEPSEEK_BASE_URL = "https://api.deepseek.com"
-DEEPSEEK_MODEL = "deepseek-chat"
+# Web 模式使用 MiniMax
+MINIMAX_API_KEY = os.getenv("MINIMAX_API_KEY", "")
+MINIMAX_BASE_URL = "https://api.minimaxi.chat/v1"
+MINIMAX_MODEL = "MiniMax-Text-01"
 
 # ── 知乎 OpenAPI 配置（黑客松官方接口） ────────────────
 ZHIHU_OPENAPI_BASE = "https://openapi.zhihu.com"
@@ -28,7 +28,7 @@ DATA_DIR = Path(__file__).parent / "data"
 DEBATES_FILE = DATA_DIR / "debates.json"
 USED_TOPICS_FILE = DATA_DIR / "used_topics.json"
 WALLETS_FILE = DATA_DIR / "wallets.json"
-INITIAL_USER_BALANCE = 1000.0
+INITIAL_USER_BALANCE = 200.0  # 每人每天 200 积分
 
 # ── 预测市场设置 ──────────────────────────────────────
 INITIAL_BALANCE = 1000.0

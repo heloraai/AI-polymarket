@@ -195,3 +195,46 @@ def fetch_hotlist_for_debates(count: int = 20) -> list[dict]:
 
     print("[热榜] No hotlist data available")
     return []
+
+
+def publish_to_zhihu_circle(content: str, ring_id: str = "2001009660925334090") -> dict | None:
+    """发布想法到知乎圈子 (API 1B)。
+
+    将获胜论点发布到知乎圈子，实现"观点出圈"。
+    当前支持的圈子ID：2001009660925334090 和 2015023739549529606
+
+    Args:
+        content: 想法内容
+        ring_id: 圈子 ID
+
+    Returns:
+        发布结果 dict，失败返回 None
+    """
+    if not ZHIHU_APP_KEY or not ZHIHU_APP_SECRET:
+        print("[观点出圈] 缺少知乎 API 凭证")
+        return None
+
+    try:
+        headers = _generate_sign_headers()
+        headers["Content-Type"] = "application/json"
+
+        resp = httpx.post(
+            f"{ZHIHU_OPENAPI_BASE}/openapi/publish/pin",
+            headers=headers,
+            json={
+                "ring_id": ring_id,
+                "content": content,
+            },
+            timeout=15,
+        )
+
+        data = resp.json()
+        if data.get("status") == 0:
+            print(f"[观点出圈] 发布成功: {content[:50]}...")
+            return data.get("data", {})
+        else:
+            print(f"[观点出圈] 发布失败: {data.get('msg', 'unknown error')}")
+            return None
+    except Exception as e:
+        print(f"[观点出圈] Error: {e}")
+        return None

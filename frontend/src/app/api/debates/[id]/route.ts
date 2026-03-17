@@ -76,6 +76,7 @@ export async function GET(
             payouts,
           }
         : null,
+      zhihu_post: raw.zhihu_post || null,
       createdAt: raw.created_at,
     };
 

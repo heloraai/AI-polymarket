@@ -152,11 +152,6 @@ export default function Home() {
           </div>
           <div className="flex items-center gap-3">
             <NetWorthBadge wallet={wallet} loading={walletLoading} />
-            {/* Live market indicator */}
-            <div className="hidden sm:flex items-center gap-1.5 px-2.5 py-1.5 bg-[#F0FFF4] border border-[#C8E6C9] rounded-full">
-              <span className="w-1.5 h-1.5 rounded-full bg-[#00C853] animate-pulse" />
-              <span className="text-xs text-[#2E7D32] font-medium">交易中</span>
-            </div>
             <LoginButton user={user} />
           </div>
         </div>
