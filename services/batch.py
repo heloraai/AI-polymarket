@@ -51,9 +51,9 @@ def _ensure_available_debates(client) -> int:
     need = MIN_AVAILABLE_DEBATES - len(available)
     print(f"[BATCH] Only {len(available)} available, need {need} more")
 
-    # 如果 used_topics 太多，清空重来
+    # 如果 used_topics 太多或可用辩论不够，清空重来
     used_topics = load_used_topics()
-    if len(used_topics) > 80:
+    if len(used_topics) > 30:
         print("[BATCH] Clearing used topics to refresh pool")
         used_topics = set()
         save_used_topics(used_topics)

@@ -14210,8 +14210,8 @@
     "source": "zhihu_hotlist",
     "source_token": "2016934500672754743",
     "category": "zhihu_hotlist",
-    "status": "running",
-    "phase": "站队辩护",
+    "status": "completed",
+    "phase": "已结束",
     "agents": [
       {
         "id": "bull",
@@ -14344,6 +14344,81 @@
         "round_num": 2,
         "target_agent": null,
         "timestamp": "2026-03-17T18:38:59.568774"
+      },
+      {
+        "agent_id": "bull",
+        "agent_name": "牛哥",
+        "agent_emoji": "🐂",
+        "content": "各位朋友，机会总是留给乐观的人！印度选择直接与伊朗对话，正是为了提升地区影响力！首先，印度展示了其作为地区大国的领导力，通过独立解决航运问题，赢得了伊朗的信任。其次，印度此举不仅保障了自身能源安全，还为地区稳定做出了贡献，这是提升影响力的关键一步。熊总和狐师提到的风险确实存在，但风险与机遇并存，印度正是在这种博弈中寻求突破。鸮博士和梭哈王过于关注经济利益，却忽略了长远战略价值。印度通过这次对话，已经在中东舞台上迈出了重要一步，未来必将获得更大的影响力！",
+        "phase": "站队辩护",
+        "round_num": 1,
+        "target_agent": "🦉鸮博士",
+        "defected": false,
+        "old_option": null,
+        "new_option": null,
+        "old_label": null,
+        "new_label": null,
+        "timestamp": "2026-03-17T18:39:19.028427"
+      },
+      {
+        "agent_id": "bear",
+        "agent_name": "熊总",
+        "agent_emoji": "🐻",
+        "content": "各位，印度选择直接与伊朗对话，明显是为了避开美国影响。你们太天真了，看看数据再说：印美关系紧张，美国对伊朗制裁严厉，印度此举无疑是在走钢丝。印度85%的石油依赖进口，伊朗是重要供应国，但美国才是真正能影响印度经济的超级大国。印度试图在美伊之间寻求平衡，更多是出于无奈，而非主动的战略选择。牛哥和梭哈王过于乐观，忽视了美国可能采取的制裁措施。印度此举风险极高，所谓的'经济利益'和'地区影响力'都是空中楼阁。",
+        "phase": "站队辩护",
+        "round_num": 1,
+        "target_agent": "🦉鸮博士",
+        "defected": false,
+        "old_option": null,
+        "new_option": null,
+        "old_label": null,
+        "new_label": null,
+        "timestamp": "2026-03-17T18:39:24.915394"
+      },
+      {
+        "agent_id": "fox",
+        "agent_name": "狐师",
+        "agent_emoji": "🦊",
+        "content": "各位，印度选择直接与伊朗对话，核心目的就是避开美国影响。表面上看似为了经济利益或地区影响力，但别忘了，印度在美伊之间走钢丝，稍有不慎就会得罪美国。印度冒着风险与伊朗对话，正是为了避免完全依赖美国，确保自身能源安全。牛哥所说的'外交独立性'不过是表面文章，鸮博士和梭哈王的经济利益论也忽略了美国制裁的威胁。印度此举恰恰是为了在夹缝中求生存，而非追求虚幻的影响力或短视的经济利益。",
+        "phase": "站队辩护",
+        "round_num": 1,
+        "target_agent": "🦉鸮博士",
+        "defected": false,
+        "old_option": null,
+        "new_option": null,
+        "old_label": null,
+        "new_label": null,
+        "timestamp": "2026-03-17T18:39:31.665396"
+      },
+      {
+        "agent_id": "owl",
+        "agent_name": "鸮博士",
+        "agent_emoji": "🦉",
+        "content": "根据数据显示，印度85%的石油依赖进口，伊朗是其关键供应国。确保霍尔木兹海峡航运安全对印度经济至关重要。印度选择直接与伊朗对话，最直接的动机就是保障其经济命脉——能源供应的稳定性。[option_3] 获得经济利益是最符合印度当前利益的选项。印度两艘油轮的安全通过已经证明了这一点。相比之下，[option_2] 提升地区影响力缺乏数据支持，印度在中东的影响力远不及其他大国，[option_0] 展示外交独立性也因美国对伊朗的制裁而显得脆弱。",
+        "phase": "站队辩护",
+        "round_num": 1,
+        "target_agent": "🐂牛哥",
+        "defected": false,
+        "old_option": null,
+        "new_option": null,
+        "old_label": null,
+        "new_label": null,
+        "timestamp": "2026-03-17T18:39:37.739188"
+      },
+      {
+        "agent_id": "degen",
+        "agent_name": "梭哈王",
+        "agent_emoji": "🎲",
+        "content": "别废话了，梭哈！印度85%的石油靠进口，伊朗是命脉！油轮安全通过就是铁证——不搞定伊朗，国内经济都得崩。什么地区影响力、外交独立性，都是虚的！印度现在最需要的是稳住能源供应，不然国内经济都得完蛋。熊总和狐师说的风险确实存在，但眼下命脉被捏住，不谈不行！感觉来了挡不住，押经济利益准没错！",
+        "phase": "站队辩护",
+        "round_num": 1,
+        "target_agent": "🐂牛哥",
+        "defected": false,
+        "old_option": null,
+        "new_option": null,
+        "old_label": null,
+        "new_label": null,
+        "timestamp": "2026-03-17T18:39:42.031147"
       }
     ],
     "bets": [
@@ -14410,9 +14485,254 @@
       "option_3": 30.0,
       "option_4": 10.0
     },
-    "team_defense_messages": [],
-    "judgment": null,
-    "payouts": null,
+    "team_defense_messages": [
+      {
+        "agent_id": "bull",
+        "agent_name": "牛哥",
+        "agent_emoji": "🐂",
+        "content": "各位朋友，机会总是留给乐观的人！印度选择直接与伊朗对话，正是为了提升地区影响力！首先，印度展示了其作为地区大国的领导力，通过独立解决航运问题，赢得了伊朗的信任。其次，印度此举不仅保障了自身能源安全，还为地区稳定做出了贡献，这是提升影响力的关键一步。熊总和狐师提到的风险确实存在，但风险与机遇并存，印度正是在这种博弈中寻求突破。鸮博士和梭哈王过于关注经济利益，却忽略了长远战略价值。印度通过这次对话，已经在中东舞台上迈出了重要一步，未来必将获得更大的影响力！",
+        "phase": "站队辩护",
+        "round_num": 1,
+        "target_agent": "🦉鸮博士",
+        "defected": false,
+        "old_option": null,
+        "new_option": null,
+        "old_label": null,
+        "new_label": null,
+        "timestamp": "2026-03-17T18:39:19.028427"
+      },
+      {
+        "agent_id": "bear",
+        "agent_name": "熊总",
+        "agent_emoji": "🐻",
+        "content": "各位，印度选择直接与伊朗对话，明显是为了避开美国影响。你们太天真了，看看数据再说：印美关系紧张，美国对伊朗制裁严厉，印度此举无疑是在走钢丝。印度85%的石油依赖进口，伊朗是重要供应国，但美国才是真正能影响印度经济的超级大国。印度试图在美伊之间寻求平衡，更多是出于无奈，而非主动的战略选择。牛哥和梭哈王过于乐观，忽视了美国可能采取的制裁措施。印度此举风险极高，所谓的'经济利益'和'地区影响力'都是空中楼阁。",
+        "phase": "站队辩护",
+        "round_num": 1,
+        "target_agent": "🦉鸮博士",
+        "defected": false,
+        "old_option": null,
+        "new_option": null,
+        "old_label": null,
+        "new_label": null,
+        "timestamp": "2026-03-17T18:39:24.915394"
+      },
+      {
+        "agent_id": "fox",
+        "agent_name": "狐师",
+        "agent_emoji": "🦊",
+        "content": "各位，印度选择直接与伊朗对话，核心目的就是避开美国影响。表面上看似为了经济利益或地区影响力，但别忘了，印度在美伊之间走钢丝，稍有不慎就会得罪美国。印度冒着风险与伊朗对话，正是为了避免完全依赖美国，确保自身能源安全。牛哥所说的'外交独立性'不过是表面文章，鸮博士和梭哈王的经济利益论也忽略了美国制裁的威胁。印度此举恰恰是为了在夹缝中求生存，而非追求虚幻的影响力或短视的经济利益。",
+        "phase": "站队辩护",
+        "round_num": 1,
+        "target_agent": "🦉鸮博士",
+        "defected": false,
+        "old_option": null,
+        "new_option": null,
+        "old_label": null,
+        "new_label": null,
+        "timestamp": "2026-03-17T18:39:31.665396"
+      },
+      {
+        "agent_id": "owl",
+        "agent_name": "鸮博士",
+        "agent_emoji": "🦉",
+        "content": "根据数据显示，印度85%的石油依赖进口，伊朗是其关键供应国。确保霍尔木兹海峡航运安全对印度经济至关重要。印度选择直接与伊朗对话，最直接的动机就是保障其经济命脉——能源供应的稳定性。[option_3] 获得经济利益是最符合印度当前利益的选项。印度两艘油轮的安全通过已经证明了这一点。相比之下，[option_2] 提升地区影响力缺乏数据支持，印度在中东的影响力远不及其他大国，[option_0] 展示外交独立性也因美国对伊朗的制裁而显得脆弱。",
+        "phase": "站队辩护",
+        "round_num": 1,
+        "target_agent": "🐂牛哥",
+        "defected": false,
+        "old_option": null,
+        "new_option": null,
+        "old_label": null,
+        "new_label": null,
+        "timestamp": "2026-03-17T18:39:37.739188"
+      },
+      {
+        "agent_id": "degen",
+        "agent_name": "梭哈王",
+        "agent_emoji": "🎲",
+        "content": "别废话了，梭哈！印度85%的石油靠进口，伊朗是命脉！油轮安全通过就是铁证——不搞定伊朗，国内经济都得崩。什么地区影响力、外交独立性，都是虚的！印度现在最需要的是稳住能源供应，不然国内经济都得完蛋。熊总和狐师说的风险确实存在，但眼下命脉被捏住，不谈不行！感觉来了挡不住，押经济利益准没错！",
+        "phase": "站队辩护",
+        "round_num": 1,
+        "target_agent": "🐂牛哥",
+        "defected": false,
+        "old_option": null,
+        "new_option": null,
+        "old_label": null,
+        "new_label": null,
+        "timestamp": "2026-03-17T18:39:42.031147"
+      }
+    ],
+    "judgment": {
+      "winning_option": "option_3",
+      "winning_label": "印度想获得经济利益",
+      "reasoning": "【结论先行】印度选择直接与伊朗对话，最核心的动机是获得经济利益，尤其是保障能源供应的稳定性。\n\n【证据分析】\n1. **经济利益优先（option_3）**：\n   - 据可信搜数据显示，印度85%的石油依赖进口，伊朗是其关键供应国（@庙里没肉吃了，79赞）。苏杰生明确表示，通过外交手段解决航运问题对印度至关重要，这表明经济利益是主要驱动力。\n   - 印度两艘油轮的安全通过进一步证明了这一点（@（0赞）：印度证实与伊朗进行谈判_腾讯新闻）。\n\n2. **外交独立性的有限体现（option_0）**：\n   - 虽然苏杰生强调外交手段的重要性，但印度的外交政策并非完全独立。印度在美伊之间寻求平衡，更多是出于现实需要，而非主动的战略选择（@（0赞）：印度证实与伊朗进行谈判_腾讯新闻）。\n\n3. **地区影响力的局限性（option_2）**：\n   - 印度在中东的影响力远不及美国、俄罗斯等国。苏杰生的对话更多是应对航运安全的紧急措施，而非提升地区影响力的长期战略（@（0赞）：印度证实与伊朗进行谈判_腾讯新闻）。\n\n4. **避开美国影响的必要性（option_1）**：\n   - 印度此举确实存在激怒美国的风险，但正如可信搜数据所示，印度在夹缝中求生存，试图在美伊之间找到平衡点（@庙里没肉吃了，79赞）。\n\n【反方声音】\n熊总和狐师提到印度此举风险极高，可能激怒美国，影响印美关系，这一点值得重视。然而，正如鸮博士和梭哈王所言，印度当前最迫切的需求是保障能源安全，而非过度担忧长远风险。\n\n【数据裁定依据】\n1. 印度85%的石油依赖进口，伊朗是关键供应国（@庙里没肉吃了，79赞）。\n2. 苏杰生明确表示，通过外交手段解决航运问题是印度的优先选择（@（0赞）：印度证实与伊朗进行谈判_腾讯新闻）。\n3. 两艘印度油轮的安全通过证明了外交手段的有效性（@（0赞）：印度证实与伊朗进行谈判_腾讯新闻）。\n\n【最终结论】\n综上所述，印度选择直接与伊朗对话，最核心的动机是获得经济利益，尤其是保障能源供应的稳定性。尽管存在一定的外交风险，但印度在当前形势下别无选择，只能通过对话解决问题。\n\n",
+      "option_analysis": {
+        "option_0": {
+          "score": 70,
+          "strength": "展示了印度的外交独立性",
+          "weakness": "独立性有限，受制于美伊关系",
+          "key_evidence": "苏杰生强调外交手段的重要性",
+          "data_support": "可信搜数据部分支持"
+        },
+        "option_1": {
+          "score": 75,
+          "strength": "解释了印度的谨慎态度",
+          "weakness": "过于强调风险，忽略了经济利益",
+          "key_evidence": "印度在美伊之间寻求平衡",
+          "data_support": "可信搜数据部分支持"
+        },
+        "option_2": {
+          "score": 60,
+          "strength": "体现了印度的战略意图",
+          "weakness": "缺乏数据支持，印度影响力有限",
+          "key_evidence": "印度在中东的影响力远不及其他大国",
+          "data_support": "可信搜数据不支持"
+        },
+        "option_3": {
+          "score": 90,
+          "strength": "直接针对印度核心利益",
+          "weakness": "过于关注短期利益，忽视长远影响",
+          "key_evidence": "印度85%的石油依赖进口，伊朗是关键供应国",
+          "data_support": "可信搜数据强支持"
+        },
+        "option_4": {
+          "score": 65,
+          "strength": "体现了印度的外交策略",
+          "weakness": "过于理想化，忽视现实压力",
+          "key_evidence": "印度试图在美伊之间保持平衡",
+          "data_support": "可信搜数据部分支持"
+        }
+      },
+      "scores": {
+        "option_0": {
+          "facts": 20,
+          "logic": 20,
+          "rebuttal": 15,
+          "consensus": 10,
+          "feasibility": 5,
+          "total": 70
+        },
+        "option_1": {
+          "facts": 20,
+          "logic": 20,
+          "rebuttal": 15,
+          "consensus": 10,
+          "feasibility": 10,
+          "total": 75
+        },
+        "option_2": {
+          "facts": 15,
+          "logic": 15,
+          "rebuttal": 10,
+          "consensus": 10,
+          "feasibility": 10,
+          "total": 60
+        },
+        "option_3": {
+          "facts": 30,
+          "logic": 25,
+          "rebuttal": 20,
+          "consensus": 10,
+          "feasibility": 5,
+          "total": 90
+        },
+        "option_4": {
+          "facts": 20,
+          "logic": 20,
+          "rebuttal": 15,
+          "consensus": 5,
+          "feasibility": 5,
+          "total": 65
+        }
+      },
+      "mvp": "鸮博士",
+      "mvp_reason": "鸮博士提供了最详细的数据分析，精准指出了印度选择的核心动机是经济利益。",
+      "highlights": [
+        "精彩瞬间1：牛哥强调风险与机遇并存，体现了乐观主义精神。",
+        "精彩瞬间2：狐师逆向思考，指出印度此举是避险而非进取，提供了新的视角。",
+        "精彩瞬间3：梭哈王以强烈的直觉押注经济利益，突出了核心论点。"
+      ],
+      "data_sources": [
+        "据知乎@庙里没肉吃了的分析（79赞）指出，印度85%的石油依赖进口，伊朗是关键供应国。",
+        "据英国《金融时报》网站报道（可信搜数据），印度外交部长苏杰生表示，通过外交手段解决航运问题是印度的优先选择。"
+      ],
+      "total_pool": 200,
+      "loser_pool": 120,
+      "payouts": {
+        "牛哥": {
+          "bet": 40,
+          "payout": 0,
+          "profit": -40,
+          "net": -40,
+          "result": "lose"
+        },
+        "熊总": {
+          "bet": 40,
+          "payout": 0,
+          "profit": -40,
+          "net": -40,
+          "result": "lose"
+        },
+        "狐师": {
+          "bet": 40,
+          "payout": 0,
+          "profit": -40,
+          "net": -40,
+          "result": "lose"
+        },
+        "鸮博士": {
+          "bet": 40,
+          "payout": 100.0,
+          "profit": 60.0,
+          "net": 60.0,
+          "result": "win"
+        },
+        "梭哈王": {
+          "bet": 40,
+          "payout": 100.0,
+          "profit": 60.0,
+          "net": 60.0,
+          "result": "win"
+        }
+      }
+    },
+    "payouts": {
+      "牛哥": {
+        "bet": 40,
+        "payout": 0,
+        "profit": -40,
+        "net": -40,
+        "result": "lose"
+      },
+      "熊总": {
+        "bet": 40,
+        "payout": 0,
+        "profit": -40,
+        "net": -40,
+        "result": "lose"
+      },
+      "狐师": {
+        "bet": 40,
+        "payout": 0,
+        "profit": -40,
+        "net": -40,
+        "result": "lose"
+      },
+      "鸮博士": {
+        "bet": 40,
+        "payout": 100.0,
+        "profit": 60.0,
+        "net": 60.0,
+        "result": "win"
+      },
+      "梭哈王": {
+        "bet": 40,
+        "payout": 100.0,
+        "profit": 60.0,
+        "net": 60.0,
+        "result": "win"
+      }
+    },
     "created_at": "2026-03-17T17:51:37.240839"
   },
   "a0297ac6": {

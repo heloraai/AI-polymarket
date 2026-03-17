@@ -544,7 +544,14 @@ def get_leaderboard():
             "type": "user",
             "net_worth": nw,
         })
-    leaderboard.sort(key=lambda x: x.get("net_worth", x.get("total_profit", 0)), reverse=True)
+    # Users always rank above AI agents, then sort by net_worth/profit
+    leaderboard.sort(
+        key=lambda x: (
+            1 if x.get("type") == "user" else 0,  # users first
+            x.get("net_worth", x.get("total_profit", 0)),
+        ),
+        reverse=True,
+    )
 
     return {"leaderboard": leaderboard}
 
