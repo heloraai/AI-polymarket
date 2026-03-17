@@ -49,9 +49,22 @@ export default function Home() {
   // Check onboarding status on mount
   useEffect(() => {
     const onboarded = localStorage.getItem('arena_onboarded');
-    if (!onboarded) {
-      setShowOnboarding(true);
-    }
+    // If user is logged in (came back from OAuth), skip onboarding
+    fetch('/api/auth/me').then(r => r.json()).then(d => {
+      if (d.user) {
+        localStorage.setItem('arena_onboarded', 'true');
+        if (!localStorage.getItem('arena_user_id')) {
+          localStorage.setItem('arena_user_id', d.user.id);
+        }
+        setShowOnboarding(false);
+        setUser(d.user);
+      } else if (!onboarded) {
+        setShowOnboarding(true);
+      }
+    }).catch(() => {
+      if (!onboarded) setShowOnboarding(true);
+    });
+
     const savedPersonality = localStorage.getItem('arena_personality');
     if (savedPersonality) {
       const labels: Record<string, string> = {
