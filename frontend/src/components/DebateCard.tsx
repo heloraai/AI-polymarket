@@ -133,21 +133,16 @@ export default function DebateCard({ debate }: { debate: Debate }) {
           </div>
           <div className="flex items-center gap-2">
             {debate.status === 'created' && (
-              <button
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  fetch(`/api/debates/${debate.id}/run`, { method: 'POST' })
-                    .then(() => window.location.reload())
-                    .catch(() => alert('启动失败'));
-                }}
+              <Link
+                href={`/debate/${debate.id}`}
+                onClick={(e) => e.stopPropagation()}
                 className="px-3 py-1.5 bg-[#0066FF] text-white text-xs font-medium rounded-full hover:bg-[#0052CC] transition-all active:scale-95"
               >
-                ⚔️ 开始辩论
-              </button>
+                💰 买入观点
+              </Link>
             )}
             <Link href={`/debate/${debate.id}`} className="text-xs text-[#0066FF] font-medium hover:underline">
-              查看详情 →
+              {debate.status === 'created' ? '详情' : debate.status === 'running' ? '观战 →' : '查看结算 →'}
             </Link>
           </div>
         </div>

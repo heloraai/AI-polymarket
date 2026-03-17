@@ -48,11 +48,11 @@ export default function BettingPanel({ debate, wallet, onBuyShares }: Props) {
       {/* Header */}
       <div className="px-4 py-3 border-b border-[#F0F0F0] bg-[#FAFAFA]">
         <h3 className="text-sm font-semibold text-[#1A1A1A]">
-          {isFinished ? '结算完成' : '观点交易台'}
+          {isFinished ? '结算完成' : '买入观点 · 派出分身'}
         </h3>
         {!isFinished && (
           <p className="text-[11px] text-[#8590A6] mt-0.5">
-            选中一个观点，用积分为你的判断买单
+            选中观点 → 买入 → 你的 AI 分身自动参战
           </p>
         )}
       </div>

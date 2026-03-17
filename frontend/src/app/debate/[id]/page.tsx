@@ -48,8 +48,32 @@ export default function DebateDetailPage({ params }: { params: Promise<{ id: str
 
   const handleBuyShares = async (optionKey: string, quantity: number) => {
     try {
+      // 买入 = 同时派出分身参战
+      const userId = localStorage.getItem('arena_user_id') || crypto.randomUUID();
+      localStorage.setItem('arena_user_id', userId);
+      const personality = localStorage.getItem('arena_personality') || '';
+      const labels: Record<string, string> = {
+        rational: '理性分析，数据说话',
+        idealist: '关心公平正义，理想主义',
+        pragmatist: '务实派，看重可操作性',
+        skeptic: '质疑派，对主流保持警惕',
+      };
+
+      // 1. 派分身加入辩论（忽略已加入错误）
+      await fetch(`/api/debates/${id}/join`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          user_id: userId,
+          user_name: '我的分身',
+          personality_override: labels[personality] || '理性思考，独立判断',
+        }),
+      }).catch(() => {});
+
+      // 2. 买入观点股
       await walletBuyShares(id, optionKey, quantity);
-      // Refresh debate data too
+
+      // 3. 刷新辩论数据
       const res = await fetch(`/api/debates/${id}`);
       if (res.ok) setDebate(await res.json());
     } catch (err: unknown) {
@@ -125,58 +149,17 @@ export default function DebateDetailPage({ params }: { params: Promise<{ id: str
           </div>
           {isFinished ? (
             <span className="shrink-0 flex items-center gap-1 px-2.5 py-1 text-xs font-medium rounded-full bg-[#E8F5E9] text-[#2E7D32]">
-              ✓ 已裁决
+              ✓ 已结算
             </span>
           ) : debate.status === 'running' ? (
             <span className="shrink-0 flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium rounded-full bg-[#FFF3E0] text-[#E65100]">
               <span className="w-1.5 h-1.5 rounded-full bg-[#E65100] animate-pulse" />
-              辩论中
+              交易中
             </span>
           ) : (
-            <div className="flex items-center gap-2">
-              <button
-                onClick={async () => {
-                  const userId = localStorage.getItem('arena_user_id') || crypto.randomUUID();
-                  localStorage.setItem('arena_user_id', userId);
-                  const personality = localStorage.getItem('arena_personality') || '';
-                  const labels: Record<string, string> = {
-                    rational: '理性分析，数据说话',
-                    idealist: '关心公平正义，理想主义',
-                    pragmatist: '务实派，看重可操作性',
-                    skeptic: '质疑派，对主流保持警惕',
-                  };
-                  try {
-                    const res = await fetch(`/api/debates/${id}/join`, {
-                      method: 'POST',
-                      headers: { 'Content-Type': 'application/json' },
-                      body: JSON.stringify({
-                        user_id: userId,
-                        user_name: '我的分身',
-                        personality_override: labels[personality] || '理性思考，独立判断',
-                      }),
-                    });
-                    if (res.ok) {
-                      window.location.reload();
-                    } else {
-                      const err = await res.json();
-                      alert(err.error || '加入失败');
-                    }
-                  } catch {
-                    alert('网络错误');
-                  }
-                }}
-                className="shrink-0 px-4 py-1.5 bg-white text-[#0066FF] text-sm font-medium rounded-full border border-[#0066FF] hover:bg-[#F0F7FF] transition-all active:scale-95"
-              >
-                👤 加入
-              </button>
-              <button
-                onClick={handleRun}
-                disabled={running}
-                className="shrink-0 px-4 py-1.5 bg-[#0066FF] text-white text-sm font-medium rounded-full hover:bg-[#0052CC] disabled:opacity-50 transition-all active:scale-95"
-              >
-                {running ? '启动中...' : '⚔️ 开始辩论'}
-              </button>
-            </div>
+            <span className="shrink-0 px-2.5 py-1 text-xs rounded-full bg-[#E8F0FE] text-[#0066FF] font-medium">
+              可买入
+            </span>
           )}
         </div>
       </header>
@@ -407,7 +390,7 @@ export default function DebateDetailPage({ params }: { params: Promise<{ id: str
             <div className="bg-white rounded-xl border border-[#EBEBEB] p-12 text-center">
               <div className="text-4xl mb-3">⚔️</div>
               <p className="text-[#8590A6] text-sm">辩论尚未开始</p>
-              <p className="text-[#C8C8C8] text-xs mt-1">点击右上角「开始辩论」让 AI Agent 们交锋</p>
+              <p className="text-[#C8C8C8] text-xs mt-1">在右侧买入你支持的观点，系统将自动开启辩论</p>
             </div>
           )}
         </div>
@@ -415,49 +398,6 @@ export default function DebateDetailPage({ params }: { params: Promise<{ id: str
         {/* Right sidebar: Betting panel */}
         <div className="lg:w-80 shrink-0">
           <div className="lg:sticky lg:top-20">
-            {/* Join with SecondMe */}
-            {debate.status === 'created' && (
-              <div className="bg-white rounded-xl border border-[#EBEBEB] p-4 mb-4">
-                <h3 className="text-sm font-semibold text-[#1A1A1A] mb-2">🎭 用你的分身参战</h3>
-                <p className="text-xs text-[#8590A6] mb-3">让你的 SecondMe AI 分身加入这场辩论</p>
-                <button
-                  onClick={async () => {
-                    const userId = localStorage.getItem('arena_user_id') || crypto.randomUUID();
-                    localStorage.setItem('arena_user_id', userId);
-                    const personality = localStorage.getItem('arena_personality') || '';
-                    const labels: Record<string, string> = {
-                      rational: '理性分析，数据说话',
-                      idealist: '关心公平正义，理想主义',
-                      pragmatist: '务实派，看重可操作性',
-                      skeptic: '质疑派，对主流保持警惕',
-                    };
-                    try {
-                      const res = await fetch(`/api/debates/${id}/join`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                          user_id: userId,
-                          user_name: '我的分身',
-                          personality_override: labels[personality] || '理性思考，独立判断',
-                        }),
-                      });
-                      if (res.ok) {
-                        window.location.reload();
-                      } else {
-                        const err = await res.json();
-                        alert(err.error || '加入失败');
-                      }
-                    } catch {
-                      alert('网络错误');
-                    }
-                  }}
-                  className="w-full py-2.5 bg-[#0066FF] text-white text-sm font-medium rounded-xl hover:bg-[#0052CC] transition-all active:scale-[0.98]"
-                >
-                  👤 派出我的分身
-                </button>
-              </div>
-            )}
-
             <BettingPanel debate={debate} wallet={wallet} onBuyShares={handleBuyShares} />
 
             {/* Winner payout card */}

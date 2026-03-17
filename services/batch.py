@@ -139,7 +139,7 @@ def run_batch_debates():
 
         # Step 2: Run debates that have been pending for 30+ minutes
         debates = load_debates()
-        cutoff_time = (datetime.now() - timedelta(minutes=30)).isoformat()
+        cutoff_time = (datetime.now() - timedelta(minutes=5)).isoformat()  # 5分钟后自动开赛
         pending = [
             d for d in debates.values()
             if d.get("status") == "created"
