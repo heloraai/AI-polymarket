@@ -1,8 +1,14 @@
 """数据持久化 — JSON 文件读写"""
 
 import json
+import re
 
 from config import DATA_DIR, DEBATES_FILE, USED_TOPICS_FILE, WALLETS_FILE
+
+
+def _clean_control_chars(text: str) -> str:
+    """移除 JSON 中的控制字符（保留换行和制表符）。"""
+    return re.sub(r'[\x00-\x08\x0b\x0c\x0e-\x1f]', '', text)
 
 
 def load_debates() -> dict[str, dict]:
@@ -10,6 +16,7 @@ def load_debates() -> dict[str, dict]:
         return {}
     try:
         raw = DEBATES_FILE.read_text(encoding="utf-8")
+        raw = _clean_control_chars(raw)
         return json.loads(raw) if raw.strip() else {}
     except (json.JSONDecodeError, OSError):
         return {}

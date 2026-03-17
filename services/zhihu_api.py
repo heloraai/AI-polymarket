@@ -139,14 +139,18 @@ def fetch_hotlist_for_debates(count: int = 20) -> list[dict]:
         try:
             items = fetch_billboard(top_cnt=count)
             topics = []
+            import re
+            def _clean(s: str) -> str:
+                return re.sub(r'[\x00-\x08\x0b\x0c\x0e-\x1f]', '', s)
+
             for item in items:
-                title = item.get("title", "")
-                body = (item.get("body", "") or "")[:200]
+                title = _clean(item.get("title", ""))
+                body = _clean((item.get("body", "") or "")[:200])
                 answers = item.get("answers", [])
 
                 answer_summaries = []
                 for ans in (answers or [])[:3]:
-                    ans_body = (ans.get("body", "") or "")[:300]
+                    ans_body = _clean((ans.get("body", "") or "")[:300])
                     votes = ans.get("interaction_info", {}).get("vote_up_count", 0)
                     if ans_body:
                         answer_summaries.append(f"({votes}赞) {ans_body}")

@@ -547,3 +547,13 @@ def get_leaderboard():
     leaderboard.sort(key=lambda x: x.get("net_worth", x.get("total_profit", 0)), reverse=True)
 
     return {"leaderboard": leaderboard}
+
+
+@router.post("/reset")
+def reset_all_data():
+    """重置所有数据（开发用）。"""
+    from services.persistence import save_debates, save_used_topics, save_wallets
+    save_debates({})
+    save_used_topics(set())
+    save_wallets({})
+    return {"message": "All data reset"}
