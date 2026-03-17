@@ -14,13 +14,16 @@ function transformDebate(d: Record<string, unknown>): Record<string, unknown> {
 
   // Map status: backend "completed" → frontend "finished"
   const rawStatus = d.status as string;
-  const status = rawStatus === 'completed' ? 'finished' : rawStatus;
+  let status = rawStatus;
+  if (rawStatus === 'completed') status = 'finished';
+  // "created" and "running" pass through as-is
 
   return {
     id: d.id,
     title: d.title,
     description: (d.context as string) || '',
     options: options.map((o) => o.label),
+    option_prices: (d.market_prices as Record<string, number>) || {},
     status,
     phase: d.phase || '',
     result: judgment ? (judgment.winning_label as string) : null,

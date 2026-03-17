@@ -150,10 +150,13 @@ def run_batch_debates():
             print("[BATCH] No mature pending debates to run (waiting for joins)")
             return
 
-        print(f"[BATCH] Starting batch: {len(pending)} mature debates")
-        for debate in pending[:5]:  # Max 5 per batch to limit API cost
+        print(f"[BATCH] Starting batch: {len(pending)} mature debates (max 5, 1-min gaps)")
+        for i, debate in enumerate(pending[:5]):
+            if i > 0:
+                print(f"[BATCH] Waiting 60s before next debate ({i+1}/5)...")
+                time.sleep(60)  # 1-minute gap between debates to stagger
             try:
-                print(f"[BATCH] Running: {debate['title'][:30]}...")
+                print(f"[BATCH] Running ({i+1}/{min(len(pending), 5)}): {debate['title'][:30]}...")
                 # Rebuild agent list
                 agents = list(AGENT_PERSONALITIES)
                 builtin_ids = {a["id"] for a in AGENT_PERSONALITIES}

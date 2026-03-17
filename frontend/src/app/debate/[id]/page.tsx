@@ -4,6 +4,7 @@ import { useEffect, useState, use } from 'react';
 import Link from 'next/link';
 import RoundtableComment from '@/components/RoundtableComment';
 import BettingPanel from '@/components/BettingPanel';
+import VictoryPoster from '@/components/VictoryPoster';
 import { getAgent } from '@/lib/constants';
 import type { Debate, Message } from '@/lib/types';
 
@@ -13,6 +14,7 @@ export default function DebateDetailPage({ params }: { params: Promise<{ id: str
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'roundtable' | 'bets' | 'ruling'>('roundtable');
   const [running, setRunning] = useState(false);
+  const [showPoster, setShowPoster] = useState(false);
 
   useEffect(() => {
     fetch(`/api/debates/${id}`)
@@ -90,13 +92,50 @@ export default function DebateDetailPage({ params }: { params: Promise<{ id: str
               辩论中
             </span>
           ) : (
-            <button
-              onClick={handleRun}
-              disabled={running}
-              className="shrink-0 px-4 py-1.5 bg-[#0066FF] text-white text-sm font-medium rounded-full hover:bg-[#0052CC] disabled:opacity-50 transition-all active:scale-95"
-            >
-              {running ? '启动中...' : '⚔️ 开始辩论'}
-            </button>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={async () => {
+                  const userId = localStorage.getItem('arena_user_id') || crypto.randomUUID();
+                  localStorage.setItem('arena_user_id', userId);
+                  const personality = localStorage.getItem('arena_personality') || '';
+                  const labels: Record<string, string> = {
+                    rational: '理性分析，数据说话',
+                    idealist: '关心公平正义，理想主义',
+                    pragmatist: '务实派，看重可操作性',
+                    skeptic: '质疑派，对主流保持警惕',
+                  };
+                  try {
+                    const res = await fetch(`/api/debates/${id}/join`, {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({
+                        user_id: userId,
+                        user_name: '我的分身',
+                        personality_override: labels[personality] || '理性思考，独立判断',
+                      }),
+                    });
+                    if (res.ok) {
+                      window.location.reload();
+                    } else {
+                      const err = await res.json();
+                      alert(err.error || '加入失败');
+                    }
+                  } catch {
+                    alert('网络错误');
+                  }
+                }}
+                className="shrink-0 px-4 py-1.5 bg-white text-[#0066FF] text-sm font-medium rounded-full border border-[#0066FF] hover:bg-[#F0F7FF] transition-all active:scale-95"
+              >
+                👤 加入
+              </button>
+              <button
+                onClick={handleRun}
+                disabled={running}
+                className="shrink-0 px-4 py-1.5 bg-[#0066FF] text-white text-sm font-medium rounded-full hover:bg-[#0052CC] disabled:opacity-50 transition-all active:scale-95"
+              >
+                {running ? '启动中...' : '⚔️ 开始辩论'}
+              </button>
+            </div>
           )}
         </div>
       </header>
@@ -337,34 +376,92 @@ export default function DebateDetailPage({ params }: { params: Promise<{ id: str
         {/* Right sidebar: Betting panel */}
         <div className="lg:w-80 shrink-0">
           <div className="lg:sticky lg:top-20">
+            {/* Join with SecondMe */}
+            {debate.status === 'created' && (
+              <div className="bg-white rounded-xl border border-[#EBEBEB] p-4 mb-4">
+                <h3 className="text-sm font-semibold text-[#1A1A1A] mb-2">🎭 用你的分身参战</h3>
+                <p className="text-xs text-[#8590A6] mb-3">让你的 SecondMe AI 分身加入这场辩论</p>
+                <button
+                  onClick={async () => {
+                    const userId = localStorage.getItem('arena_user_id') || crypto.randomUUID();
+                    localStorage.setItem('arena_user_id', userId);
+                    const personality = localStorage.getItem('arena_personality') || '';
+                    const labels: Record<string, string> = {
+                      rational: '理性分析，数据说话',
+                      idealist: '关心公平正义，理想主义',
+                      pragmatist: '务实派，看重可操作性',
+                      skeptic: '质疑派，对主流保持警惕',
+                    };
+                    try {
+                      const res = await fetch(`/api/debates/${id}/join`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                          user_id: userId,
+                          user_name: '我的分身',
+                          personality_override: labels[personality] || '理性思考，独立判断',
+                        }),
+                      });
+                      if (res.ok) {
+                        window.location.reload();
+                      } else {
+                        const err = await res.json();
+                        alert(err.error || '加入失败');
+                      }
+                    } catch {
+                      alert('网络错误');
+                    }
+                  }}
+                  className="w-full py-2.5 bg-[#0066FF] text-white text-sm font-medium rounded-xl hover:bg-[#0052CC] transition-all active:scale-[0.98]"
+                >
+                  👤 派出我的分身
+                </button>
+              </div>
+            )}
+
             <BettingPanel debate={debate} />
 
             {/* Winner payout card */}
             {isFinished && debate.judgment && (
-              <div className="mt-4 bg-gradient-to-br from-[#F1FFF6] to-[#E8F5E9] rounded-xl border border-[#C8E6C9] p-4">
-                <div className="flex items-center gap-2 mb-3">
-                  <img src="/liu-kanshan.png" alt="刘看山" className="w-5 h-5 rounded-full" />
-                  <span className="text-sm font-bold text-[#2E7D32]">裁定：{debate.result}</span>
+              <>
+                <div className="mt-4 bg-gradient-to-br from-[#F1FFF6] to-[#E8F5E9] rounded-xl border border-[#C8E6C9] p-4">
+                  <div className="flex items-center gap-2 mb-3">
+                    <img src="/liu-kanshan.png" alt="刘看山" className="w-5 h-5 rounded-full" />
+                    <span className="text-sm font-bold text-[#2E7D32]">裁定：{debate.result}</span>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {debate.bets.map((bet) => {
+                      const payout = debate.judgment?.payouts?.[bet.agentName.replace(/^[^\u4e00-\u9fff]+/, '')];
+                      const agent = getAgent(bet.agentName);
+                      const isWin = bet.won === true;
+                      const profit = payout?.net ?? 0;
+                      return (
+                        <div key={bet.id} className={`flex items-center gap-1.5 px-2 py-1 rounded-full text-xs ${isWin ? 'bg-[#E8F5E9] text-[#2E7D32]' : 'bg-[#FFEBEE] text-[#C62828]'}`}>
+                          <span>{agent.emoji}</span>
+                          <span className="font-medium tabular-nums">{isWin ? '+' : ''}{profit}</span>
+                        </div>
+                      );
+                    })}
+                  </div>
                 </div>
-                <div className="flex flex-wrap gap-2">
-                  {debate.bets.map((bet) => {
-                    const payout = debate.judgment?.payouts?.[bet.agentName.replace(/^[^\u4e00-\u9fff]+/, '')];
-                    const agent = getAgent(bet.agentName);
-                    const isWin = bet.won === true;
-                    const profit = payout?.net ?? 0;
-                    return (
-                      <div key={bet.id} className={`flex items-center gap-1.5 px-2 py-1 rounded-full text-xs ${isWin ? 'bg-[#E8F5E9] text-[#2E7D32]' : 'bg-[#FFEBEE] text-[#C62828]'}`}>
-                        <span>{agent.emoji}</span>
-                        <span className="font-medium tabular-nums">{isWin ? '+' : ''}{profit}</span>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
+
+                {/* Share poster button */}
+                <button
+                  onClick={() => setShowPoster(true)}
+                  className="mt-3 w-full py-2.5 bg-[#07C160] text-white text-sm font-medium rounded-xl hover:bg-[#06AD56] transition-all active:scale-[0.98] flex items-center justify-center gap-2"
+                >
+                  📤 生成结算海报
+                </button>
+              </>
             )}
           </div>
         </div>
       </div>
+
+      {/* Victory poster modal */}
+      {showPoster && debate.judgment && (
+        <VictoryPoster debate={debate} onClose={() => setShowPoster(false)} />
+      )}
     </div>
   );
 }
