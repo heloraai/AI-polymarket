@@ -1,23 +1,22 @@
 import { NextResponse } from 'next/server';
-import { getSessionUserId } from '@/lib/auth';
-import { prisma } from '@/lib/db';
+import { cookies } from 'next/headers';
 
 export async function GET() {
-  const userId = await getSessionUserId();
+  const cookieStore = await cookies();
+  const userId = cookieStore.get('userId')?.value;
 
   if (!userId) {
     return NextResponse.json({ user: null });
   }
 
-  const user = await prisma.user.findUnique({
-    where: { id: userId },
-    select: {
-      id: true,
-      name: true,
-      avatarUrl: true,
-      secondmeUserId: true,
+  const name = decodeURIComponent(cookieStore.get('userName')?.value || '');
+  const avatarUrl = decodeURIComponent(cookieStore.get('userAvatar')?.value || '') || null;
+
+  return NextResponse.json({
+    user: {
+      id: userId,
+      name: name || userId,
+      avatarUrl,
     },
   });
-
-  return NextResponse.json({ user });
 }

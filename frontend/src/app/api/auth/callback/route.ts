@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { exchangeCodeForToken, getUserInfo, getSoftMemory } from '@/lib/auth';
-import { prisma } from '@/lib/db';
 
 export async function GET(request: NextRequest) {
   const code = request.nextUrl.searchParams.get('code');
@@ -11,56 +10,55 @@ export async function GET(request: NextRequest) {
 
   try {
     const tokenData = await exchangeCodeForToken(code);
-    const { accessToken, refreshToken, expiresIn } = tokenData;
+    const { accessToken } = tokenData;
 
     const [userInfo, softMemory] = await Promise.all([
       getUserInfo(accessToken),
       getSoftMemory(accessToken),
     ]);
 
-    const tokenExpiresAt = new Date(Date.now() + expiresIn * 1000);
-
     // Build personality from soft memory fragments
     const personality = softMemory.length > 0
-      ? softMemory.slice(0, 10).join('\n')  // Take up to 10 memory fragments
+      ? softMemory.slice(0, 10).join('\n')
       : '';
 
-    const user = await prisma.user.upsert({
-      where: { secondmeUserId: userInfo.route || userInfo.email || userInfo.name },
-      create: {
-        secondmeUserId: userInfo.route || userInfo.email || userInfo.name,
-        name: userInfo.name,
-        avatarUrl: userInfo.avatarUrl,
-        accessToken,
-        refreshToken,
-        tokenExpiresAt,
-      },
-      update: {
-        name: userInfo.name,
-        avatarUrl: userInfo.avatarUrl,
-        accessToken,
-        refreshToken,
-        tokenExpiresAt,
-      },
-    });
+    const userId = userInfo.route || userInfo.email || userInfo.name || 'unknown';
 
     const response = NextResponse.redirect(new URL('/', request.url));
 
-    // Store personality in cookie for the frontend to pass to backend
+    // Store user info in cookies (no database needed)
+    response.cookies.set('userId', userId, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 60 * 60 * 24 * 30,
+    });
+    response.cookies.set('userName', encodeURIComponent(userInfo.name || ''), {
+      httpOnly: false,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 60 * 60 * 24 * 30,
+    });
+    response.cookies.set('userAvatar', encodeURIComponent(userInfo.avatarUrl || ''), {
+      httpOnly: false,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 60 * 60 * 24 * 30,
+    });
+    response.cookies.set('accessToken', accessToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 60 * 60 * 24 * 30,
+    });
     if (personality) {
       response.cookies.set('userPersonality', encodeURIComponent(personality), {
-        httpOnly: false,  // Readable by frontend JS
+        httpOnly: false,
         secure: process.env.NODE_ENV === 'production',
         sameSite: 'lax',
         maxAge: 60 * 60 * 24 * 30,
       });
     }
-    response.cookies.set('userId', user.id, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      maxAge: 60 * 60 * 24 * 30, // 30 days
-    });
 
     return response;
   } catch (error) {
