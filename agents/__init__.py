@@ -1,9 +1,4 @@
-from .topic_hunter import TopicHunterAgent
-from .sentiment_analyst import SentimentAnalystAgent
-from .prediction_trader import PredictionTraderAgent
-from .outcome_judge import OutcomeJudgeAgent
-from .zhihu_researcher import ZhihuResearcherAgent
-from .arena import Arena
+# CLI agents use anthropic SDK — lazy import to avoid dependency in Web mode
 from .personalities import (
     ALL_PERSONALITIES, AGENT_PERSONALITIES,
     BULL, BEAR, FOX, OWL, DEGEN,
@@ -11,12 +6,6 @@ from .personalities import (
 )
 
 __all__ = [
-    "TopicHunterAgent",
-    "SentimentAnalystAgent",
-    "PredictionTraderAgent",
-    "OutcomeJudgeAgent",
-    "ZhihuResearcherAgent",
-    "Arena",
     "ALL_PERSONALITIES",
     "AGENT_PERSONALITIES",
     "BULL", "BEAR", "FOX", "OWL", "DEGEN",
