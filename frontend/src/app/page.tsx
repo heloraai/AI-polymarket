@@ -92,7 +92,8 @@ export default function Home() {
     init();
   }, [fetchDebates]);
 
-  const ongoingDebates = debates.filter((d) => d.status !== 'finished');
+  const ongoingDebates = debates.filter((d) => d.status === 'running');
+  const createdDebates = debates.filter((d) => d.status === 'created');
   const finishedDebates = debates.filter((d) => d.status === 'finished');
 
   if (loading) {
@@ -124,9 +125,9 @@ export default function Home() {
             </h1>
             <nav className="flex items-center gap-1">
               {[
-                { key: 'hot' as const, label: '热榜', count: debates.length },
-                { key: 'ongoing' as const, label: '进行中', count: ongoingDebates.length },
-                { key: 'finished' as const, label: '已裁决', count: finishedDebates.length },
+                { key: 'hot' as const, label: '热榜', count: createdDebates.length },
+                { key: 'ongoing' as const, label: '交易中', count: ongoingDebates.length },
+                { key: 'finished' as const, label: '已结算', count: finishedDebates.length },
               ].map((tab) => (
                 <button
                   key={tab.key}
@@ -145,9 +146,14 @@ export default function Home() {
               ))}
             </nav>
           </div>
-          <div className="flex items-center gap-4">
-            {/* Polymarket-style badge */}
-            <div className="flex items-center gap-1.5 px-3 py-1.5 bg-[#F0FFF4] border border-[#C8E6C9] rounded-full">
+          <div className="flex items-center gap-3">
+            {/* Points badge */}
+            <div className="flex items-center gap-1.5 px-3 py-1.5 bg-[#FFF8E1] rounded-full">
+              <span className="text-sm">🪙</span>
+              <span className="text-xs text-[#F57C00] font-medium">200 积分</span>
+            </div>
+            {/* Live market indicator */}
+            <div className="hidden sm:flex items-center gap-1.5 px-2.5 py-1.5 bg-[#F0FFF4] border border-[#C8E6C9] rounded-full">
               <span className="w-1.5 h-1.5 rounded-full bg-[#00C853] animate-pulse" />
               <span className="text-xs text-[#2E7D32] font-medium">交易中</span>
             </div>
@@ -174,7 +180,7 @@ export default function Home() {
           {/* Debate list */}
           {activeTab === 'hot' && (
             <>
-              {debates.map((debate, index) => (
+              {createdDebates.map((debate, index) => (
                 <div key={debate.id} className="flex gap-3 items-start">
                   {/* Hot rank number */}
                   <div className={`shrink-0 w-7 h-7 flex items-center justify-center rounded text-sm font-bold mt-5 ${
@@ -193,7 +199,7 @@ export default function Home() {
           {activeTab === 'ongoing' && (
             ongoingDebates.length === 0 ? (
               <div className="text-center py-16 text-[#8590A6] text-sm bg-white rounded-lg border border-[#EBEBEB]">
-                暂无进行中的辩论
+                暂无交易中的辩论
               </div>
             ) : (
               ongoingDebates.map((d) => <DebateCard key={d.id} debate={d} />)
@@ -203,7 +209,7 @@ export default function Home() {
           {activeTab === 'finished' && (
             finishedDebates.length === 0 ? (
               <div className="text-center py-16 text-[#8590A6] text-sm bg-white rounded-lg border border-[#EBEBEB]">
-                暂无已裁决的辩论
+                暂无已结算的辩论
               </div>
             ) : (
               finishedDebates.map((d) => <DebateCard key={d.id} debate={d} />)
@@ -257,8 +263,8 @@ export default function Home() {
           <div className="flex items-center justify-around py-2">
             {[
               { key: 'hot' as const, label: '热榜', icon: '🔥' },
-              { key: 'ongoing' as const, label: '进行中', icon: '⚔️' },
-              { key: 'finished' as const, label: '已裁决', icon: '⚖️' },
+              { key: 'ongoing' as const, label: '交易中', icon: '📈' },
+              { key: 'finished' as const, label: '已结算', icon: '✅' },
             ].map((tab) => (
               <button
                 key={tab.key}

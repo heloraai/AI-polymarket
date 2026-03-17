@@ -48,16 +48,16 @@ export default function DebateCard({ debate }: { debate: Debate }) {
             {/* Status badge */}
             {isFinished ? (
               <span className="shrink-0 flex items-center gap-1 px-2.5 py-1 text-xs font-medium rounded-full bg-[#E8F5E9] text-[#2E7D32]">
-                ✓ 已裁决
+                ✓ 已结算
               </span>
             ) : debate.status === 'running' ? (
               <span className="shrink-0 flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium rounded-full bg-[#FFF3E0] text-[#E65100]">
                 <span className="w-1.5 h-1.5 rounded-full bg-[#E65100] animate-pulse" />
-                辩论中
+                交易中
               </span>
             ) : (
-              <span className="shrink-0 px-2.5 py-1 text-xs rounded-full bg-[#F5F5F5] text-[#999]">
-                待开始
+              <span className="shrink-0 px-2.5 py-1 text-xs rounded-full bg-[#E8F0FE] text-[#0066FF]">
+                可买入
               </span>
             )}
           </div>
