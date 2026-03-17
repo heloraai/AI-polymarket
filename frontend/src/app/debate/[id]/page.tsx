@@ -117,19 +117,11 @@ export default function DebateDetailPage({ params }: { params: Promise<{ id: str
     }
   }, [debate?.transcript.length, prevTranscriptLen]);
 
-  // Gradually reveal messages for animation effect
+  // Show all messages immediately when they arrive
   useEffect(() => {
     if (!debate) return;
-    const total = debate.transcript.length;
-    if (total === 0 || total <= visibleMsgCount) return;
-
-    // Reveal one message, then schedule next via setTimeout chain
-    const timer = setTimeout(() => {
-      setVisibleMsgCount(prev => prev + 1);
-    }, 800);
-
-    return () => clearTimeout(timer);
-  }, [debate?.transcript.length, visibleMsgCount]); // eslint-disable-line react-hooks/exhaustive-deps
+    setVisibleMsgCount(debate.transcript.length);
+  }, [debate?.transcript.length]);
 
   // Auto-popup victory poster when debate finishes and user won
   useEffect(() => {
