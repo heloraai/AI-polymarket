@@ -3,6 +3,7 @@
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 
+from config import INITIAL_USER_BALANCE
 from services.wallet import (
     get_or_create_wallet, buy_shares, calculate_net_worth, get_portfolio,
 )
@@ -24,8 +25,8 @@ def get_wallet(user_id: str, user_name: str = ""):
     return {
         **wallet,
         "net_worth": net_worth,
-        "initial_balance": 1000.0,
-        "total_pnl": round(net_worth - 1000.0, 1),
+        "initial_balance": INITIAL_USER_BALANCE,
+        "total_pnl": round(net_worth - INITIAL_USER_BALANCE, 1),
     }
 
 

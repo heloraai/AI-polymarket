@@ -535,7 +535,7 @@ def get_leaderboard():
             "name": wallet.get("user_name", "匿名"),
             "emoji": "👤",
             "description": "观点交易员",
-            "total_profit": round(nw - 1000.0, 1),
+            "total_profit": round(nw - 200.0, 1),
             "wins": wins,
             "losses": losses,
             "total_bets": active_count + settled_count,
