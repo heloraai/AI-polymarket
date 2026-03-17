@@ -138,7 +138,7 @@ def create_debate(req: CreateDebateRequest):
 
     # Calculate initial market prices
     option_keys = [o["key"] for o in options]
-    initial_prices = calculate_option_prices(option_keys, [])
+    initial_prices = calculate_option_prices(option_keys, [], seed=req.title)
 
     debate_id = uuid.uuid4().hex[:8]
     debate = {
