@@ -421,6 +421,10 @@ def run_debate(debate_id: str):
     debate["phase"] = "已结束"
     save_debate(debate)
 
+    # Settle user wallet holdings
+    from services.wallet import settle_holdings_for_debate
+    settle_holdings_for_debate(debate_id)
+
     return debate
 
 
@@ -477,5 +481,30 @@ def get_leaderboard():
         leaderboard.append(s)
 
     leaderboard.sort(key=lambda x: x["total_profit"], reverse=True)
+
+    # Add user wallets to leaderboard
+    from services.wallet import calculate_net_worth
+    from services.persistence import load_wallets
+    wallets = load_wallets()
+    for wallet in wallets.values():
+        nw = calculate_net_worth(wallet)
+        active_count = sum(1 for h in wallet.get("holdings", []) if h["status"] == "active")
+        settled_count = sum(1 for h in wallet.get("holdings", []) if h["status"].startswith("settled"))
+        wins = sum(1 for h in wallet.get("holdings", []) if h["status"] == "settled_win")
+        losses = sum(1 for h in wallet.get("holdings", []) if h["status"] == "settled_lose")
+        leaderboard.append({
+            "name": wallet.get("user_name", "匿名"),
+            "emoji": "👤",
+            "description": "观点交易员",
+            "total_profit": round(nw - 1000.0, 1),
+            "wins": wins,
+            "losses": losses,
+            "total_bets": active_count + settled_count,
+            "total_wagered": sum(h.get("total_cost", 0) for h in wallet.get("holdings", [])),
+            "win_rate": round(wins / (wins + losses) * 100) if (wins + losses) > 0 else 0,
+            "type": "user",
+            "net_worth": nw,
+        })
+    leaderboard.sort(key=lambda x: x.get("net_worth", x.get("total_profit", 0)), reverse=True)
 
     return {"leaderboard": leaderboard}

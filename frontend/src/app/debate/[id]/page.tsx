@@ -7,6 +7,7 @@ import BettingPanel from '@/components/BettingPanel';
 import VictoryPoster from '@/components/VictoryPoster';
 import { getAgent } from '@/lib/constants';
 import type { Debate, Message } from '@/lib/types';
+import { useWallet } from '@/hooks/useWallet';
 
 export default function DebateDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
@@ -15,6 +16,18 @@ export default function DebateDetailPage({ params }: { params: Promise<{ id: str
   const [activeTab, setActiveTab] = useState<'roundtable' | 'bets' | 'ruling'>('roundtable');
   const [running, setRunning] = useState(false);
   const [showPoster, setShowPoster] = useState(false);
+  const { wallet, buyShares: walletBuyShares, refresh: refreshWallet } = useWallet();
+
+  const handleBuyShares = async (optionKey: string, quantity: number) => {
+    try {
+      await walletBuyShares(id, optionKey, quantity);
+      // Refresh debate data too
+      const res = await fetch(`/api/debates/${id}`);
+      if (res.ok) setDebate(await res.json());
+    } catch (err: unknown) {
+      alert(err instanceof Error ? err.message : '买入失败');
+    }
+  };
 
   useEffect(() => {
     fetch(`/api/debates/${id}`)
@@ -419,7 +432,7 @@ export default function DebateDetailPage({ params }: { params: Promise<{ id: str
               </div>
             )}
 
-            <BettingPanel debate={debate} />
+            <BettingPanel debate={debate} wallet={wallet} onBuyShares={handleBuyShares} />
 
             {/* Winner payout card */}
             {isFinished && debate.judgment && (

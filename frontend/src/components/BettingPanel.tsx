@@ -6,12 +6,14 @@ import type { Debate, Bet } from '@/lib/types';
 
 interface Props {
   debate: Debate;
-  onBet?: (option: string, amount: number) => void;
+  wallet?: { balance: number; user_id: string } | null;
+  onBuyShares?: (optionKey: string, quantity: number) => Promise<void>;
 }
 
-export default function BettingPanel({ debate, onBet }: Props) {
+export default function BettingPanel({ debate, wallet, onBuyShares }: Props) {
   const [selectedOption, setSelectedOption] = useState<number | null>(null);
-  const [betAmount, setBetAmount] = useState(50);
+  const [quantity, setQuantity] = useState(1);
+  const [buying, setBuying] = useState(false);
 
   const isFinished = debate.status === 'finished';
   const totalBet = debate.bets.reduce((sum, b) => sum + b.amount, 0);
@@ -37,7 +39,9 @@ export default function BettingPanel({ debate, onBet }: Props) {
   });
 
   const selectedStat = selectedOption !== null ? optionStats[selectedOption] : null;
-  const potentialProfit = selectedStat ? Math.round(betAmount * (100 / selectedStat.price - 1)) : 0;
+  const maxQuantity = selectedStat ? Math.floor((wallet?.balance || 200) / selectedStat.price) : 1;
+  const totalCost = selectedStat ? quantity * selectedStat.price : 0;
+  const potentialProfit = selectedStat ? quantity * (100 - selectedStat.price) : 0;
 
   return (
     <div className="bg-white rounded-xl border border-[#EBEBEB] overflow-hidden">
@@ -111,28 +115,33 @@ export default function BettingPanel({ debate, onBet }: Props) {
       </div>
 
       {/* Bet form - shown when option selected */}
-      {selectedOption !== null && !isFinished && (
+      {selectedOption !== null && !isFinished && selectedStat && (
         <div className="px-4 pb-4 space-y-3 animate-slide-down">
           <div className="bg-[#F8F9FA] rounded-xl p-4">
             <div className="flex items-center justify-between mb-3">
-              <span className="text-sm text-[#646464]">下注金额</span>
-              <span className="text-lg font-bold text-[#1A1A1A]">{betAmount} 积分</span>
+              <span className="text-sm text-[#646464]">买入数量</span>
+              <span className="text-lg font-bold text-[#1A1A1A]">{quantity} 股</span>
             </div>
 
             {/* Slider */}
             <input
               type="range"
-              min={10}
-              max={200}
-              step={10}
-              value={betAmount}
-              onChange={(e) => setBetAmount(Number(e.target.value))}
+              min={1}
+              max={Math.max(maxQuantity, 1)}
+              step={1}
+              value={quantity}
+              onChange={(e) => setQuantity(Number(e.target.value))}
               className="w-full h-2 bg-[#EBEBEB] rounded-full appearance-none cursor-pointer accent-[#0066FF]"
             />
 
             <div className="flex justify-between text-[10px] text-[#C8C8C8] mt-1">
-              <span>10</span>
-              <span>200</span>
+              <span>1</span>
+              <span>{Math.max(maxQuantity, 1)}</span>
+            </div>
+
+            {/* Cost breakdown */}
+            <div className="mt-2 text-xs text-[#8590A6] text-center">
+              {quantity} 股 × {selectedStat.price}分 = 总计 {totalCost} 积分
             </div>
 
             {/* Payout preview */}
@@ -140,14 +149,35 @@ export default function BettingPanel({ debate, onBet }: Props) {
               <span className="text-[#8590A6]">预计利润</span>
               <span className="text-[#00C853] font-bold text-lg">+{potentialProfit} 积分</span>
             </div>
+
+            {/* Balance display */}
+            <div className="mt-2 text-xs text-[#C8C8C8] text-center">
+              可用余额: {(wallet?.balance || 0).toLocaleString()} 积分
+            </div>
           </div>
 
           {/* Confirm button */}
           <button
-            onClick={() => onBet?.(debate.options[selectedOption], betAmount)}
-            className="w-full py-3 bg-[#0066FF] text-white font-semibold rounded-xl hover:bg-[#0052CC] transition-all active:scale-[0.98]"
+            onClick={async () => {
+              if (!onBuyShares) {
+                alert('请先登录');
+                return;
+              }
+              setBuying(true);
+              try {
+                await onBuyShares(`option_${selectedOption}`, quantity);
+                setSelectedOption(null);
+                setQuantity(1);
+              } catch (err: unknown) {
+                alert(err instanceof Error ? err.message : '买入失败');
+              } finally {
+                setBuying(false);
+              }
+            }}
+            disabled={buying || totalCost > (wallet?.balance || 0)}
+            className="w-full py-3 bg-[#0066FF] text-white font-semibold rounded-xl hover:bg-[#0052CC] disabled:opacity-50 transition-all active:scale-[0.98]"
           >
-            买入「{selectedStat?.name}」· {betAmount} 积分
+            {buying ? '买入中...' : `买入「${selectedStat.name}」· ${totalCost} 积分`}
           </button>
         </div>
       )}

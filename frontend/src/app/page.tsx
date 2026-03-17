@@ -5,6 +5,8 @@ import LoginButton from '@/components/LoginButton';
 import DebateCard from '@/components/DebateCard';
 import Leaderboard from '@/components/Leaderboard';
 import Onboarding from '@/components/Onboarding';
+import NetWorthBadge from '@/components/NetWorthBadge';
+import { useWallet } from '@/hooks/useWallet';
 
 interface User {
   id: string;
@@ -42,6 +44,7 @@ export default function Home() {
   const [activeTab, setActiveTab] = useState<'hot' | 'ongoing' | 'finished'>('hot');
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [personalityLabel, setPersonalityLabel] = useState<string>('');
+  const { wallet, loading: walletLoading, initWallet } = useWallet();
 
   // Check onboarding status on mount
   useEffect(() => {
@@ -67,7 +70,8 @@ export default function Home() {
       };
       setPersonalityLabel(labels[id] || '');
     }
-  }, []);
+    initWallet();
+  }, [initWallet]);
 
   const fetchDebates = useCallback(async () => {
     try {
@@ -147,11 +151,7 @@ export default function Home() {
             </nav>
           </div>
           <div className="flex items-center gap-3">
-            {/* Points badge */}
-            <div className="flex items-center gap-1.5 px-3 py-1.5 bg-[#FFF8E1] rounded-full">
-              <span className="text-sm">🪙</span>
-              <span className="text-xs text-[#F57C00] font-medium">200 积分</span>
-            </div>
+            <NetWorthBadge wallet={wallet} loading={walletLoading} />
             {/* Live market indicator */}
             <div className="hidden sm:flex items-center gap-1.5 px-2.5 py-1.5 bg-[#F0FFF4] border border-[#C8E6C9] rounded-full">
               <span className="w-1.5 h-1.5 rounded-full bg-[#00C853] animate-pulse" />

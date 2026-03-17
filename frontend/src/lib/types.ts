@@ -72,3 +72,44 @@ export interface OptionStat {
   isLoser: boolean;
   color: string;
 }
+
+export interface Holding {
+  id: string;
+  debate_id: string;
+  debate_title: string;
+  option_key: string;
+  option_label: string;
+  quantity: number;
+  buy_price: number;
+  total_cost: number;
+  current_price?: number;
+  current_value?: number;
+  pnl?: number;
+  pnl_pct?: number;
+  status: 'active' | 'settled_win' | 'settled_lose';
+  bought_at: string;
+  debate_status?: string;
+  result?: string;
+}
+
+export interface Transaction {
+  id: string;
+  type: 'buy' | 'settle_win' | 'settle_lose';
+  debate_id: string;
+  option_label: string;
+  amount: number;
+  shares: number;
+  price_per_share: number;
+  timestamp: string;
+}
+
+export interface Wallet {
+  user_id: string;
+  user_name: string;
+  balance: number;
+  net_worth: number;
+  initial_balance: number;
+  total_pnl: number;
+  holdings: Holding[];
+  transactions: Transaction[];
+}

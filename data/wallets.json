@@ -1,0 +1,42 @@
+{
+  "81a4614e-aa3e-42c0-a65c-12a7b2bbaa4f": {
+    "user_id": "81a4614e-aa3e-42c0-a65c-12a7b2bbaa4f",
+    "user_name": "交易员_81a461",
+    "balance": 1000.0,
+    "created_at": "2026-03-17T11:32:49.411293",
+    "holdings": [],
+    "transactions": []
+  },
+  "test-user-123": {
+    "user_id": "test-user-123",
+    "user_name": "交易员_test-u",
+    "balance": 957.2,
+    "created_at": "2026-03-17T11:33:08.165460",
+    "holdings": [
+      {
+        "id": "h_e95b4d5a",
+        "debate_id": "bbbba008",
+        "debate_title": "网络热梗小卡片在校园周边热销，「尸体不舒服请个殡假」「看你不爽就上吊」成流行语，会对孩子产生多大影响？",
+        "option_key": "option_0",
+        "option_label": "会严重影响心理健康",
+        "quantity": 2,
+        "buy_price": 21.4,
+        "total_cost": 42.8,
+        "status": "active",
+        "bought_at": "2026-03-17T11:34:03.492844"
+      }
+    ],
+    "transactions": [
+      {
+        "id": "tx_df9f9d23",
+        "type": "buy",
+        "debate_id": "bbbba008",
+        "option_label": "会严重影响心理健康",
+        "amount": -42.8,
+        "shares": 2,
+        "price_per_share": 21.4,
+        "timestamp": "2026-03-17T11:34:03.492876"
+      }
+    ]
+  }
+}

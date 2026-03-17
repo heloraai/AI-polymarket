@@ -27,6 +27,8 @@ ZHIHU_COOKIE = os.getenv("ZHIHU_COOKIE", "")
 DATA_DIR = Path(__file__).parent / "data"
 DEBATES_FILE = DATA_DIR / "debates.json"
 USED_TOPICS_FILE = DATA_DIR / "used_topics.json"
+WALLETS_FILE = DATA_DIR / "wallets.json"
+INITIAL_USER_BALANCE = 1000.0
 
 # ── 预测市场设置 ──────────────────────────────────────
 INITIAL_BALANCE = 1000.0

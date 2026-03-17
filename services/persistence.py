@@ -2,7 +2,7 @@
 
 import json
 
-from config import DATA_DIR, DEBATES_FILE, USED_TOPICS_FILE
+from config import DATA_DIR, DEBATES_FILE, USED_TOPICS_FILE, WALLETS_FILE
 
 
 def load_debates() -> dict[str, dict]:
@@ -44,3 +44,26 @@ def save_used_topics(topics: set[str]) -> None:
     USED_TOPICS_FILE.write_text(
         json.dumps(list(topics), ensure_ascii=False, indent=2), encoding="utf-8",
     )
+
+
+def load_wallets() -> dict[str, dict]:
+    if not WALLETS_FILE.exists():
+        return {}
+    try:
+        raw = WALLETS_FILE.read_text(encoding="utf-8")
+        return json.loads(raw) if raw.strip() else {}
+    except (json.JSONDecodeError, OSError):
+        return {}
+
+
+def save_wallets(wallets: dict[str, dict]) -> None:
+    DATA_DIR.mkdir(parents=True, exist_ok=True)
+    WALLETS_FILE.write_text(
+        json.dumps(wallets, ensure_ascii=False, indent=2), encoding="utf-8",
+    )
+
+
+def save_wallet(wallet: dict) -> None:
+    wallets = load_wallets()
+    wallets[wallet["user_id"]] = wallet
+    save_wallets(wallets)
