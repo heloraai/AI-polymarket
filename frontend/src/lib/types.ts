@@ -94,7 +94,7 @@ export interface Holding {
 
 export interface Transaction {
   id: string;
-  type: 'buy' | 'settle_win' | 'settle_lose';
+  type: 'buy' | 'settle_win' | 'settle_lose' | 'citation_dividend';
   debate_id: string;
   option_label: string;
   amount: number;

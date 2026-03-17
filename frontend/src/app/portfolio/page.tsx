@@ -124,6 +124,20 @@ export default function PortfolioPage() {
                         </div>
                         <span>{h.quantity}股 · 买入价 {h.buy_price}分</span>
                       </div>
+                      {/* 引用分成 */}
+                      {isWin && ((h as unknown as Record<string, number>).citation_count ?? 0) > 0 && (
+                        <div className="mt-2 flex items-center gap-2 px-3 py-1.5 bg-[#FFF8E1] rounded-lg border border-[#FFE082]">
+                          <span className="text-sm">🔗</span>
+                          <span className="text-xs text-[#F57C00] font-medium">
+                            被引用 {(h as unknown as Record<string, number>).citation_count} 次 · 分成 +{(h as unknown as Record<string, number>).total_dividends} 积分
+                          </span>
+                        </div>
+                      )}
+                      {isWin && ((h as unknown as Record<string, number>).citation_count ?? 0) === 0 && (
+                        <div className="mt-2 text-[10px] text-[#C8C8C8]">
+                          📈 持股观点 · 被其他辩论引用时自动获得分成
+                        </div>
+                      )}
                     </div>
                   </Link>
                 );
@@ -152,7 +166,7 @@ export default function PortfolioPage() {
                 <div key={tx.id} className="px-4 py-3 border-b border-[#F0F0F0] last:border-0 flex items-center justify-between">
                   <div>
                     <div className="text-sm text-[#1A1A1A]">
-                      {tx.type === 'buy' ? '买入' : tx.type === 'settle_win' ? '结算收益' : '结算亏损'}
+                      {tx.type === 'buy' ? '买入' : tx.type === 'settle_win' ? '结算收益' : tx.type === 'citation_dividend' ? '🔗 引用分成' : '结算亏损'}
                       <span className="text-[#8590A6] ml-1">「{tx.option_label}」</span>
                     </div>
                     <div className="text-[10px] text-[#C8C8C8] mt-0.5">

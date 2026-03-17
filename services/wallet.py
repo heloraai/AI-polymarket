@@ -179,6 +179,84 @@ def settle_holdings_for_debate(debate_id: str) -> None:
         from services.persistence import save_wallets
         save_wallets(wallets)
 
+    # 观点引用分成：检查这场辩论是否引用了其他用户的持股观点
+    _check_opinion_citations(debate_id)
+
+
+CITATION_DIVIDEND = 5  # 每次引用分成 5 积分
+
+
+def _check_opinion_citations(debate_id: str) -> None:
+    """检查辩论内容是否引用了用户的持股观点，给分成。
+
+    匹配规则：如果新辩论 transcript 中出现了用户获胜观点的关键词，
+    给原持有者发分成。每个持股观点每场辩论最多分成一次。
+    """
+    debates = load_debates()
+    debate = debates.get(debate_id)
+    if not debate:
+        return
+
+    # 收集这场辩论的所有发言文本
+    transcript_text = " ".join(
+        msg.get("content", "") for msg in debate.get("transcript", [])
+    )
+    if not transcript_text:
+        return
+
+    wallets = load_wallets()
+    changed = False
+
+    for wallet in wallets.values():
+        for holding in wallet.get("holdings", []):
+            # 只检查已获胜的持股观点
+            if holding.get("status") != "settled_win":
+                continue
+            # 不要检查同一场辩论
+            if holding.get("debate_id") == debate_id:
+                continue
+            # 检查是否已经对这场辩论分过成
+            cited_in = holding.get("cited_in", [])
+            if debate_id in cited_in:
+                continue
+
+            # 匹配：获胜观点标签是否在新辩论发言中被提及
+            opinion_label = holding.get("option_label", "")
+            debate_title_keywords = holding.get("debate_title", "")[:20]
+
+            if opinion_label and (
+                opinion_label in transcript_text
+                or debate_title_keywords in transcript_text
+            ):
+                # 匹配到了！发分成
+                wallet["balance"] = round(wallet["balance"] + CITATION_DIVIDEND, 1)
+                holding.setdefault("cited_in", []).append(debate_id)
+                holding["citation_count"] = holding.get("citation_count", 0) + 1
+                holding["total_dividends"] = round(
+                    holding.get("total_dividends", 0) + CITATION_DIVIDEND, 1
+                )
+
+                wallet["transactions"].append({
+                    "id": f"tx_{uuid.uuid4().hex[:8]}",
+                    "type": "citation_dividend",
+                    "debate_id": debate_id,
+                    "option_label": opinion_label,
+                    "amount": CITATION_DIVIDEND,
+                    "shares": 0,
+                    "price_per_share": 0,
+                    "timestamp": datetime.now().isoformat(),
+                })
+
+                changed = True
+                print(
+                    f"[引用分成] {wallet['user_name']} 的观点「{opinion_label}」"
+                    f"被辩论 {debate_id} 引用，+{CITATION_DIVIDEND}积分"
+                )
+
+    if changed:
+        from services.persistence import save_wallets
+        save_wallets(wallets)
+
 
 def calculate_net_worth(wallet: dict) -> float:
     """计算观点身价 = 余额 + 持仓市值。"""
