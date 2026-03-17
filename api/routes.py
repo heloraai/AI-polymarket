@@ -556,9 +556,17 @@ def get_leaderboard():
     return {"leaderboard": leaderboard}
 
 
-@router.post("/reset")
+@router.post("/reset-topics")
+def reset_topics_only():
+    """只重置已用话题列表（不影响辩论和钱包数据）。"""
+    from services.persistence import save_used_topics
+    save_used_topics(set())
+    return {"message": "Used topics reset, debates and wallets preserved"}
+
+
+@router.post("/reset-all")
 def reset_all_data():
-    """重置所有数据（开发用）。"""
+    """重置所有数据（每天晚上手动调用）。"""
     from services.persistence import save_debates, save_used_topics, save_wallets
     save_debates({})
     save_used_topics(set())

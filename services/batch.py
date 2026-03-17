@@ -53,12 +53,7 @@ def _ensure_available_debates(client, max_create: int = 20) -> int:
     need = max(max_create, MIN_AVAILABLE_DEBATES - len(available))
     print(f"[BATCH] Only {len(available)} available, creating up to {need}")
 
-    # 如果 used_topics 太多，清空重来
     used_topics = load_used_topics()
-    if len(used_topics) > 40:
-        print("[BATCH] Clearing used topics to refresh pool")
-        used_topics = set()
-        save_used_topics(used_topics)
 
     topics = fetch_hotlist_for_debates(count=100)
     if not topics:

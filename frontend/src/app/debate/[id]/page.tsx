@@ -576,11 +576,13 @@ export default function DebateDetailPage({ params }: { params: Promise<{ id: str
         {/* Right sidebar: Betting panel */}
         <div className="lg:w-80 shrink-0">
           <div className="lg:sticky lg:top-20">
-            {debate.status === 'created' && !spectating && (
+            {/* Show BettingPanel if user hasn't bought yet AND debate not finished */}
+            {!isFinished && !spectating && !wallet?.holdings?.find((h: Holding) => h.debate_id === debate.id) && (
               <BettingPanel debate={debate} wallet={wallet} onBuyShares={handleBuyShares} />
             )}
 
-            {(spectating || debate.status === 'running') && (
+            {/* Show holding card if user already bought */}
+            {(spectating || wallet?.holdings?.find((h: Holding) => h.debate_id === debate.id)) && !isFinished && (
               <div className="bg-white rounded-xl border border-[#EBEBEB] p-4">
                 <h3 className="text-sm font-semibold text-[#1A1A1A] mb-3">你的持仓</h3>
                 <div className="bg-[#E8F0FE] rounded-lg p-3">
