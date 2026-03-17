@@ -27,7 +27,7 @@ _next_batch_time: Optional[str] = None
 
 MIN_AVAILABLE_DEBATES = 10
 INITIAL_BATCH_SIZE = 50   # 启动时拉50条
-HOURLY_BATCH_SIZE = 20    # 每小时补20条
+HOURLY_BATCH_SIZE = 30    # 每小时补30条
 
 
 def batch_running() -> bool:

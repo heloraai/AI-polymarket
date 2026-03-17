@@ -133,11 +133,55 @@ def search_credible_formatted(query: str, count: int = 5) -> str:
         return ""
 
 
+def _search_topics_by_keywords(keywords: list[str], per_keyword: int = 5) -> list[dict]:
+    """用可信搜按关键词搜索更多话题。"""
+    if not ZHIHU_APP_KEY or not ZHIHU_APP_SECRET:
+        return []
+
+    topics = []
+    seen_titles: set[str] = set()
+
+    for kw in keywords:
+        try:
+            time.sleep(1.1)  # 1 QPS 限制
+            items = search_global(kw, count=per_keyword)
+            for item in items:
+                title = item.get("title", "")
+                if not title or title in seen_titles:
+                    continue
+                # 只取问答类型的，适合做辩论
+                if item.get("content_type") not in ("Question", "Answer", "Article"):
+                    continue
+                seen_titles.add(title)
+                body = (item.get("content_text", "") or "")[:200]
+                topics.append({
+                    "title": title,
+                    "detail_text": body,
+                    "question_token": item.get("content_id", ""),
+                })
+        except Exception as e:
+            print(f"[可信搜补充] {kw} error: {e}")
+
+    print(f"[可信搜补充] 搜索 {len(keywords)} 个关键词，获得 {len(topics)} 条话题")
+    return topics
+
+
+# 用于可信搜补充的热门关键词池
+SEARCH_KEYWORDS = [
+    "人工智能", "AI", "ChatGPT", "房价", "就业", "创业",
+    "教育改革", "新能源", "股市", "互联网", "科技公司",
+    "社会热点", "年轻人", "职场", "婚恋", "消费",
+    "医疗", "养老", "环保", "元宇宙", "芯片",
+    "自动驾驶", "机器人", "短视频", "直播带货",
+    "考研", "考公", "留学", "生育", "延迟退休",
+]
+
+
 def fetch_hotlist_for_debates(count: int = 20) -> list[dict]:
-    """获取热榜话题（适配辩论系统格式）。多时间窗口合并去重。"""
+    """获取热榜+可信搜话题。多时间窗口合并去重+关键词搜索补充。"""
     if ZHIHU_APP_KEY and ZHIHU_APP_SECRET:
         try:
-            # 多时间窗口拉取，合并去重，最大化话题数量
+            # Step 1: 多时间窗口拉热榜
             all_items: dict[str, dict] = {}
             for hours in [48, 168, 720]:
                 batch = fetch_billboard(top_cnt=200, publish_in_hours=hours)
@@ -145,37 +189,50 @@ def fetch_hotlist_for_debates(count: int = 20) -> list[dict]:
                     title = item.get("title", "")
                     if title and title not in all_items:
                         all_items[title] = item
-            items = list(all_items.values())[:count]
-            print(f"[热榜] 合并去重后 {len(items)} 条话题")
-            topics = []
+
             import re
             def _clean(s: str) -> str:
                 return re.sub(r'[\x00-\x08\x0b\x0c\x0e-\x1f]', '', s)
 
-            for item in items:
+            topics = []
+            for item in all_items.values():
                 title = _clean(item.get("title", ""))
                 body = _clean((item.get("body", "") or "")[:200])
                 answers = item.get("answers", [])
-
                 answer_summaries = []
                 for ans in (answers or [])[:3]:
                     ans_body = _clean((ans.get("body", "") or "")[:300])
                     votes = ans.get("interaction_info", {}).get("vote_up_count", 0)
                     if ans_body:
                         answer_summaries.append(f"({votes}赞) {ans_body}")
-
                 detail = body
                 if answer_summaries:
                     detail += "\n高赞回答：\n" + "\n".join(answer_summaries)
-
                 if title:
                     topics.append({
                         "title": title,
                         "detail_text": detail,
                         "question_token": item.get("token", ""),
                     })
-            if topics:
-                return topics
+
+            print(f"[热榜] 热榜合并 {len(topics)} 条")
+
+            # Step 2: 如果不够，用可信搜补充
+            if len(topics) < count:
+                need = count - len(topics)
+                # 随机选几个关键词搜索
+                import random
+                kw_sample = random.sample(SEARCH_KEYWORDS, min(need // 3 + 2, len(SEARCH_KEYWORDS)))
+                extra = _search_topics_by_keywords(kw_sample, per_keyword=10)
+                # 去重
+                existing_titles = {t["title"] for t in topics}
+                for t in extra:
+                    if t["title"] not in existing_titles:
+                        topics.append(t)
+                        existing_titles.add(t["title"])
+
+            print(f"[热榜] 最终 {len(topics)} 条话题")
+            return topics[:count]
         except Exception as e:
             print(f"[热榜] OpenAPI error: {e}")
 
