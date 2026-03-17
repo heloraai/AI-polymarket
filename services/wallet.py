@@ -48,7 +48,9 @@ def buy_shares(
     wallets = load_wallets()
     wallet = wallets.get(user_id)
     if not wallet:
-        raise ValueError("钱包不存在，请先创建")
+        # 自动创建钱包
+        wallet = get_or_create_wallet(user_id)
+        wallets = load_wallets()
 
     debates = load_debates()
     debate = debates.get(debate_id)
