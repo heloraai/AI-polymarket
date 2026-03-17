@@ -6,7 +6,7 @@ import RoundtableComment from '@/components/RoundtableComment';
 import BettingPanel from '@/components/BettingPanel';
 import VictoryPoster from '@/components/VictoryPoster';
 import { getAgent } from '@/lib/constants';
-import type { Debate, Message } from '@/lib/types';
+import type { Debate, Holding, Message } from '@/lib/types';
 import { useWallet } from '@/hooks/useWallet';
 
 function decodeHtmlEntities(text: string): string {
@@ -44,6 +44,8 @@ export default function DebateDetailPage({ params }: { params: Promise<{ id: str
   const [activeTab, setActiveTab] = useState<'roundtable' | 'bets' | 'ruling'>('roundtable');
   const [running, setRunning] = useState(false);
   const [showPoster, setShowPoster] = useState(false);
+  const [spectating, setSpectating] = useState(false);
+  const [prevTranscriptLen, setPrevTranscriptLen] = useState(0);
   const { wallet, buyShares: walletBuyShares, refresh: refreshWallet } = useWallet();
 
   const handleBuyShares = async (optionKey: string, quantity: number) => {
@@ -76,6 +78,9 @@ export default function DebateDetailPage({ params }: { params: Promise<{ id: str
       // 3. 刷新辩论数据
       const res = await fetch(`/api/debates/${id}`);
       if (res.ok) setDebate(await res.json());
+
+      // 4. 进入观战模式
+      setSpectating(true);
     } catch (err: unknown) {
       alert(err instanceof Error ? err.message : '买入失败');
     }
@@ -87,6 +92,43 @@ export default function DebateDetailPage({ params }: { params: Promise<{ id: str
       .then((d) => { setDebate(d); setLoading(false); })
       .catch(() => setLoading(false));
   }, [id]);
+
+  // Auto-scroll when new messages arrive during spectating
+  useEffect(() => {
+    if (!debate) return;
+    const newLen = debate.transcript.length;
+    if (newLen > prevTranscriptLen) {
+      setPrevTranscriptLen(newLen);
+      const el = document.getElementById('debate-scroll');
+      if (el) {
+        setTimeout(() => el.scrollTo({ top: el.scrollHeight, behavior: 'smooth' }), 100);
+      }
+    }
+  }, [debate?.transcript.length, prevTranscriptLen]);
+
+  // Auto-popup victory poster when debate finishes and user won
+  useEffect(() => {
+    if (!debate || debate.status !== 'finished' || !debate.judgment) return;
+    if (!spectating) return; // Only auto-popup if user was spectating
+
+    const userId = localStorage.getItem('arena_user_id');
+    if (!userId) return;
+
+    // Check if user's holding won
+    const walletUserId = userId;
+    fetch(`/api/wallet/${walletUserId}/portfolio`)
+      .then(r => r.json())
+      .then(portfolio => {
+        const wonHolding = (portfolio.settled || []).find(
+          (h: Record<string, unknown>) => h.debate_id === debate.id && h.result === 'win'
+        );
+        if (wonHolding) {
+          // User won! Show victory poster
+          setTimeout(() => setShowPoster(true), 1000);
+        }
+      })
+      .catch(() => {});
+  }, [debate?.status, debate?.id, spectating, debate?.judgment]);
 
   // Auto-refresh when debate is running
   useEffect(() => {
@@ -412,8 +454,72 @@ export default function DebateDetailPage({ params }: { params: Promise<{ id: str
             </div>
           )}
 
+          {/* Spectating mode - real-time debate */}
+          {(spectating || debate.status === 'running') && hasTranscript && (
+            <div className="bg-white rounded-xl border border-[#EBEBEB] overflow-hidden">
+              {/* Phase indicator */}
+              <div className="px-4 py-3 bg-gradient-to-r from-[#FFF3E0] to-[#FFF8E1] border-b border-[#FFE0B2] flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-[#E65100] animate-pulse" />
+                <span className="text-sm font-medium text-[#E65100]">
+                  {debate.phase || '辩论进行中'}
+                </span>
+                <span className="text-xs text-[#F57C00] ml-auto">
+                  {debate.transcript.length} 条发言
+                </span>
+              </div>
+
+              {/* Messages appearing one by one */}
+              <div className="max-h-[500px] overflow-y-auto" id="debate-scroll">
+                {Object.entries(phases).map(([phase, messages]) => (
+                  <div key={phase}>
+                    <div className="sticky top-0 z-10 px-4 py-2 bg-[#FAFAFA] border-b border-[#EBEBEB]">
+                      <span className="text-xs font-semibold text-[#8590A6] uppercase tracking-wider">{phase}</span>
+                    </div>
+                    {messages.map((msg, i) => (
+                      <RoundtableComment
+                        key={`${phase}-${i}`}
+                        agent={msg.agent}
+                        content={msg.content}
+                        phase={phase}
+                        targetAgent={msg.target_agent}
+                        defected={msg.defected}
+                        oldLabel={msg.old_label}
+                        newLabel={msg.new_label}
+                      />
+                    ))}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Waiting for debate to start */}
+          {spectating && !hasTranscript && debate.status !== 'finished' && (
+            <div className="bg-white rounded-xl border border-[#EBEBEB] p-12 text-center">
+              <div className="w-12 h-12 border-4 border-[#E8F0FE] border-t-[#0066FF] rounded-full animate-spin mx-auto mb-4" />
+              <p className="text-[#1A1A1A] font-medium">AI 正在集结，辩论即将开始...</p>
+              <p className="text-[#8590A6] text-xs mt-1">5 位 AI 交易员 + 你的分身即将激辩</p>
+            </div>
+          )}
+
+          {/* Result announcement */}
+          {debate.status === 'finished' && debate.judgment && spectating && (
+            <div className="bg-white rounded-xl border border-[#EBEBEB] p-5 mt-4">
+              <div className="flex items-center gap-3 mb-3">
+                <img src="/liu-kanshan.png" alt="刘看山" className="w-10 h-10 rounded-full" />
+                <div>
+                  <div className="text-sm font-bold text-[#37474F]">刘看山裁定</div>
+                  <div className="text-lg font-bold text-[#00C853]">胜出观点：{debate.result}</div>
+                </div>
+              </div>
+              <div className="text-[14px] text-[#333] leading-relaxed bg-[#F9FAFB] border-l-[3px] border-[#0066FF] pl-4 py-3 rounded-r-lg whitespace-pre-wrap">
+                {debate.judgment.reasoning?.slice(0, 300)}...
+              </div>
+            </div>
+          )}
+
           {/* Empty state */}
-          {!hasTranscript && !hasBets && (
+          {!spectating && !hasTranscript && !hasBets && debate.status !== 'running' && debate.status !== 'finished' && (
             <div className="bg-white rounded-xl border border-[#EBEBEB] p-12 text-center">
               <div className="text-4xl mb-3">💰</div>
               <p className="text-[#8590A6] text-sm">选择你支持的观点，买入即参战</p>
@@ -425,7 +531,30 @@ export default function DebateDetailPage({ params }: { params: Promise<{ id: str
         {/* Right sidebar: Betting panel */}
         <div className="lg:w-80 shrink-0">
           <div className="lg:sticky lg:top-20">
-            <BettingPanel debate={debate} wallet={wallet} onBuyShares={handleBuyShares} />
+            {debate.status === 'created' && !spectating && (
+              <BettingPanel debate={debate} wallet={wallet} onBuyShares={handleBuyShares} />
+            )}
+
+            {(spectating || debate.status === 'running') && (
+              <div className="bg-white rounded-xl border border-[#EBEBEB] p-4">
+                <h3 className="text-sm font-semibold text-[#1A1A1A] mb-3">你的持仓</h3>
+                <div className="bg-[#E8F0FE] rounded-lg p-3">
+                  <div className="text-xs text-[#8590A6] mb-1">你支持的观点</div>
+                  <div className="text-[#0066FF] font-medium">
+                    {/* Find user's holding for this debate */}
+                    {wallet?.holdings?.find((h: Holding) => h.debate_id === debate.id)
+                      ? wallet.holdings.find((h: Holding) => h.debate_id === debate.id)?.option_label || '加载中...'
+                      : '加载中...'}
+                  </div>
+                </div>
+                {debate.status === 'running' && (
+                  <div className="mt-3 flex items-center gap-2 text-xs text-[#E65100]">
+                    <span className="w-1.5 h-1.5 rounded-full bg-[#E65100] animate-pulse" />
+                    辩论进行中，请观战...
+                  </div>
+                )}
+              </div>
+            )}
 
             {/* Winner payout card */}
             {isFinished && debate.judgment && (
