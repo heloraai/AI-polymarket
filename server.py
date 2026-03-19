@@ -3,7 +3,9 @@
 知乎热榜出题，AI 辩论下注，刘看山裁定。
 """
 
+import shutil
 import threading
+from pathlib import Path
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -34,6 +36,16 @@ app.include_router(wallet_router)
 @app.on_event("startup")
 def startup_event():
     """启动批量调度后台线程。"""
+    # 若持久化磁盘为空（首次挂载），从镜像内置的 seed 数据初始化
+    data_dir = Path("/app/data")
+    seed_dir = Path("/app/data_seed")
+    if seed_dir.exists():
+        for seed_file in seed_dir.iterdir():
+            target = data_dir / seed_file.name
+            if not target.exists():
+                shutil.copy2(seed_file, target)
+                print(f"[观点交易所] 从 seed 初始化: {seed_file.name}")
+
     t = threading.Thread(target=schedule_batch_loop, daemon=True)
     t.start()
     print(

@@ -7,8 +7,8 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
 
-# Create data directory
-RUN mkdir -p data
+# Backup seed data (will be used to init persistent disk on first deploy)
+RUN cp -r data /app/data_seed && mkdir -p data
 
 EXPOSE 8000
 
