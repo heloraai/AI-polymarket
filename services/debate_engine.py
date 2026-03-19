@@ -89,11 +89,33 @@ def generate_options_for_topic(client: OpenAI, title: str) -> list[dict]:
     except Exception as e:
         print(f"Option generation failed: {e}")
 
-    # Fallback: generic options
+    # Fallback: 用话题本身再试一次，简化 prompt
+    try:
+        text2 = call_llm(
+            client,
+            "为这个话题生成3-5个不同的观点立场，每个不超过8个字。只输出JSON数组：[{\"label\":\"观点1\"},{\"label\":\"观点2\"}]",
+            [{"role": "user", "content": title}],
+            max_tokens=200,
+        )
+        start = text2.find("[")
+        end = text2.rfind("]") + 1
+        if start >= 0 and end > start:
+            opts2 = json.loads(text2[start:end])
+            if isinstance(opts2, list) and len(opts2) >= 2:
+                default_colors = ["#4ecdc4", "#ff6b6b", "#ffd93d", "#6c5ce7", "#a8e6cf"]
+                return [
+                    {"key": f"option_{i}", "label": opt.get("label", f"观点{i+1}"), "color": default_colors[i % len(default_colors)]}
+                    for i, opt in enumerate(opts2[:5])
+                ]
+    except Exception:
+        pass
+
+    # 最终 fallback
     return [
-        {"key": "option_0", "label": "支持", "color": "#4ecdc4"},
-        {"key": "option_1", "label": "反对", "color": "#ff6b6b"},
-        {"key": "option_2", "label": "看情况", "color": "#ffd93d"},
+        {"key": "option_0", "label": "完全赞同", "color": "#4ecdc4"},
+        {"key": "option_1", "label": "不太认同", "color": "#ff6b6b"},
+        {"key": "option_2", "label": "需要更多信息", "color": "#ffd93d"},
+        {"key": "option_3", "label": "有更好的角度", "color": "#6c5ce7"},
     ]
 
 
