@@ -107,6 +107,22 @@ export default function Home() {
       setLoading(false);
     };
     init();
+
+    // 每30秒刷新辩论列表（后端冷启动时首次可能失败，之后自动恢复）
+    const refresh = setInterval(async () => {
+      const fetched = await fetchDebates();
+      if (fetched.length > 0) setDebates(fetched);
+    }, 30000);
+
+    // 每8分钟 ping 后端，防止 Render 免费版15分钟睡眠
+    const keepAlive = setInterval(() => {
+      fetch('/api/debates').catch(() => {});
+    }, 8 * 60 * 1000);
+
+    return () => {
+      clearInterval(refresh);
+      clearInterval(keepAlive);
+    };
   }, [fetchDebates]);
 
   const ongoingDebates = debates.filter((d) => d.status === 'running');

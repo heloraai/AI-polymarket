@@ -1,9 +1,16 @@
-"""数据持久化 — JSON 文件读写"""
+"""数据持久化 — JSON 文件读写（带内存缓存）"""
 
 import json
 import re
 
 from config import DATA_DIR, DEBATES_FILE, USED_TOPICS_FILE, WALLETS_FILE
+
+# ── 内存缓存：避免每次 API 请求都读磁盘 ──────────────────
+_debates_cache: dict[str, dict] = {}
+_debates_mtime: float = 0.0
+
+_wallets_cache: dict[str, dict] = {}
+_wallets_mtime: float = 0.0
 
 
 def _clean_control_chars(text: str) -> str:
@@ -12,21 +19,32 @@ def _clean_control_chars(text: str) -> str:
 
 
 def load_debates() -> dict[str, dict]:
+    global _debates_cache, _debates_mtime
     if not DEBATES_FILE.exists():
-        return {}
+        return _debates_cache
     try:
-        raw = DEBATES_FILE.read_text(encoding="utf-8")
-        raw = _clean_control_chars(raw)
-        return json.loads(raw) if raw.strip() else {}
+        mtime = DEBATES_FILE.stat().st_mtime
+        if mtime != _debates_mtime:
+            raw = DEBATES_FILE.read_text(encoding="utf-8")
+            raw = _clean_control_chars(raw)
+            _debates_cache = json.loads(raw) if raw.strip() else {}
+            _debates_mtime = mtime
+        return _debates_cache
     except (json.JSONDecodeError, OSError):
-        return {}
+        return _debates_cache
 
 
 def save_debates(debates: dict[str, dict]) -> None:
+    global _debates_cache, _debates_mtime
     DATA_DIR.mkdir(parents=True, exist_ok=True)
     DEBATES_FILE.write_text(
         json.dumps(debates, ensure_ascii=False, indent=2), encoding="utf-8",
     )
+    _debates_cache = debates
+    try:
+        _debates_mtime = DEBATES_FILE.stat().st_mtime
+    except OSError:
+        pass
 
 
 def save_debate(debate: dict) -> None:
@@ -54,20 +72,31 @@ def save_used_topics(topics: set[str]) -> None:
 
 
 def load_wallets() -> dict[str, dict]:
+    global _wallets_cache, _wallets_mtime
     if not WALLETS_FILE.exists():
-        return {}
+        return _wallets_cache
     try:
-        raw = WALLETS_FILE.read_text(encoding="utf-8")
-        return json.loads(raw) if raw.strip() else {}
+        mtime = WALLETS_FILE.stat().st_mtime
+        if mtime != _wallets_mtime:
+            raw = WALLETS_FILE.read_text(encoding="utf-8")
+            _wallets_cache = json.loads(raw) if raw.strip() else {}
+            _wallets_mtime = mtime
+        return _wallets_cache
     except (json.JSONDecodeError, OSError):
-        return {}
+        return _wallets_cache
 
 
 def save_wallets(wallets: dict[str, dict]) -> None:
+    global _wallets_cache, _wallets_mtime
     DATA_DIR.mkdir(parents=True, exist_ok=True)
     WALLETS_FILE.write_text(
         json.dumps(wallets, ensure_ascii=False, indent=2), encoding="utf-8",
     )
+    _wallets_cache = wallets
+    try:
+        _wallets_mtime = WALLETS_FILE.stat().st_mtime
+    except OSError:
+        pass
 
 
 def save_wallet(wallet: dict) -> None:

@@ -33,6 +33,12 @@ app.include_router(router)
 app.include_router(wallet_router)
 
 
+@app.get("/")
+def health_check():
+    """Render 健康检查 + 防止免费版睡眠的 ping 端点。"""
+    return {"status": "ok", "service": "观点交易所"}
+
+
 @app.on_event("startup")
 def startup_event():
     """启动批量调度后台线程。"""
