@@ -9,7 +9,7 @@ export async function POST(
   const { id } = await params;
 
   try {
-    const response = await fetch(`${BACKEND_URL}/api/debate/${id}/run`, {
+    const response = await fetch(`${BACKEND_URL}/api/debates/${id}/run`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
     });

@@ -14,7 +14,6 @@ function transformDebate(d: Record<string, unknown>): Record<string, unknown> {
 
   // Map status
   const rawStatus = d.status as string;
-  const judgment = d.judgment as Record<string, unknown> | null;
   let status = rawStatus;
   if (rawStatus === 'completed') status = 'finished';
   // If stuck in running but has judgment, treat as finished

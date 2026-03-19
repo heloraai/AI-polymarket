@@ -9,16 +9,19 @@ export default function DebateCard({ debate }: { debate: Debate }) {
   const [selectedIdx, setSelectedIdx] = useState<number | null>(null);
   const [buying, setBuying] = useState(false);
   const isFinished = debate.status === 'finished';
-  const hasBets = debate.bets.length > 0;
-  const totalBet = debate.bets.reduce((sum, b) => sum + b.amount, 0);
+  const bets = debate.bets || [];
+  const options = debate.options || [];
+  const transcript = debate.transcript || [];
+  const hasBets = bets.length > 0;
+  const totalBet = bets.reduce((sum, b) => sum + b.amount, 0);
 
   const backendPrices = debate.option_prices || {};
-  const optionStats = debate.options.map((opt, i) => {
-    const optBets = debate.bets.filter((b) => b.option === opt);
+  const optionStats = options.map((opt, i) => {
+    const optBets = bets.filter((b) => b.option === opt);
     const optTotal = optBets.reduce((sum, b) => sum + b.amount, 0);
     const optKey = `option_${i}`;
     const price = backendPrices[optKey]
-      ?? (totalBet > 0 ? Math.round((optTotal / totalBet) * 100) : Math.round(100 / debate.options.length));
+      ?? (totalBet > 0 ? Math.round((optTotal / totalBet) * 100) : Math.round(100 / (options.length || 1)));
     const isWinner = debate.result === opt;
     return {
       name: opt,
@@ -129,7 +132,7 @@ export default function DebateCard({ debate }: { debate: Debate }) {
           {/* Footer stats */}
           {totalBet > 0 && (
             <div className="flex items-center justify-between pt-1 px-1">
-              <span className="text-[11px] text-[#C8C8C8]">{debate.bets.length} 个 Agent · 总池 {totalBet.toLocaleString()} 分</span>
+              <span className="text-[11px] text-[#C8C8C8]">{bets.length} 个 Agent · 总池 {totalBet.toLocaleString()} 分</span>
               {isFinished && debate.judgment?.mvp && (
                 <span className="text-[11px] text-[#FF6D00] font-medium">MVP: {debate.judgment.mvp}</span>
               )}
@@ -140,9 +143,9 @@ export default function DebateCard({ debate }: { debate: Debate }) {
         {/* Action bar */}
         <div className="px-4 md:px-5 py-2.5 border-t border-[#F0F0F0] bg-[#FAFAFA] flex items-center justify-between">
           <div className="flex items-center gap-2 text-xs text-[#8590A6]">
-            {debate.transcript.length > 0 && <span>{debate.transcript.length} 条发言</span>}
-            {debate.transcript.length > 0 && hasBets && <span>·</span>}
-            {hasBets && <span>{debate.bets.length} 笔下注</span>}
+            {transcript.length > 0 && <span>{transcript.length} 条发言</span>}
+            {transcript.length > 0 && hasBets && <span>·</span>}
+            {hasBets && <span>{bets.length} 笔下注</span>}
           </div>
           <div className="flex items-center gap-2">
             {debate.status === 'created' && (
@@ -201,7 +204,7 @@ export default function DebateCard({ debate }: { debate: Debate }) {
                     : 'bg-[#EBEBEB] text-[#999] cursor-not-allowed'
                 }`}
               >
-                {buying ? '买入中...' : selectedIdx !== null ? `💰 买入「${debate.options[selectedIdx]}」` : '💰 先选择观点'}
+                {buying ? '买入中...' : selectedIdx !== null ? `💰 买入「${options[selectedIdx]}」` : '💰 先选择观点'}
               </button>
             )}
             <Link href={`/debate/${debate.id}`} className="text-xs text-[#0066FF] font-medium hover:underline">

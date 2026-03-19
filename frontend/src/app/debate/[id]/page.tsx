@@ -100,7 +100,7 @@ export default function DebateDetailPage({ params }: { params: Promise<{ id: str
   useEffect(() => {
     fetch(`/api/debates/${id}`)
       .then((r) => r.json())
-      .then((d) => { setDebate(d); setLoading(false); })
+      .then((d) => { if (d && d.id) setDebate(d); setLoading(false); })
       .catch(() => setLoading(false));
   }, [id]);
 
@@ -156,8 +156,8 @@ export default function DebateDetailPage({ params }: { params: Promise<{ id: str
         const res = await fetch(`/api/debates/${id}`);
         if (res.ok) {
           const updated = await res.json();
-          setDebate(updated);
-          if (updated.status === 'finished') {
+          if (updated && updated.id) setDebate(updated);
+          if (updated?.status === 'finished') {
             clearInterval(interval);
             refreshWallet();
           }
