@@ -12,11 +12,13 @@ function transformDebate(d: Record<string, unknown>): Record<string, unknown> {
   const judgment = d.judgment as Record<string, unknown> | null;
   const payouts = (judgment?.payouts as Record<string, Record<string, unknown>>) || {};
 
-  // Map status: backend "completed" → frontend "finished"
+  // Map status
   const rawStatus = d.status as string;
+  const judgment = d.judgment as Record<string, unknown> | null;
   let status = rawStatus;
   if (rawStatus === 'completed') status = 'finished';
-  // "created" and "running" pass through as-is
+  // If stuck in running but has judgment, treat as finished
+  if (rawStatus === 'running' && judgment) status = 'finished';
 
   return {
     id: d.id,

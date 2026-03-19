@@ -29,7 +29,9 @@ export async function GET(
     const payouts = (judgment?.payouts as Record<string, Record<string, unknown>>) || {};
 
     const rawStatus = raw.status as string;
-    const status = rawStatus === 'completed' ? 'finished' : rawStatus;
+    let status = rawStatus;
+    if (rawStatus === 'completed') status = 'finished';
+    if (rawStatus === 'running' && judgment) status = 'finished';
 
     const debate = {
       id: raw.id,

@@ -119,6 +119,20 @@ def run_batch_debates():
     try:
         client = get_deepseek_client()
 
+        # 修复卡住的辩论（running超过10分钟没完成的，重置为created）
+        debates = load_debates()
+        cutoff = (datetime.now() - timedelta(minutes=10)).isoformat()
+        for debate in debates.values():
+            if debate.get("status") == "running" and not debate.get("judgment"):
+                created_at = debate.get("created_at", "")
+                if created_at and created_at < cutoff:
+                    print(f"[BATCH] Fixing stuck debate: {debate['id']}")
+                    debate["status"] = "created"
+                    debate["phase"] = ""
+                    debate["transcript"] = []
+                    debate["bets"] = []
+                    save_debate(debate)
+
         # 只创建辩论，不自动跑。辩论只在用户买入时触发。
         _ensure_available_debates(client, max_create=HOURLY_BATCH_SIZE)
 
