@@ -342,16 +342,11 @@ def get_market_prices(debate_id: str):
 
 @router.post("/debates/{debate_id}/run")
 def run_debate(debate_id: str):
-    """Run the full 4-phase debate flow synchronously."""
-    debates = load_debates()
-    debate = debates.get(debate_id)
-    if not debate:
-        raise HTTPException(status_code=404, detail="Debate not found")
-
-    if debate.get("status") == "completed":
-        raise HTTPException(
-            status_code=400, detail="Debate already completed"
-        )
+    """Disabled — debates only start when a user buys shares."""
+    raise HTTPException(
+        status_code=403,
+        detail="Direct run not allowed. Debates start automatically when a user buys in.",
+    )
 
     client = get_deepseek_client()
 

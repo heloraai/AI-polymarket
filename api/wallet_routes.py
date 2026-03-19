@@ -39,7 +39,8 @@ def buy_opinion_shares(user_id: str, req: BuySharesRequest):
 
         # Auto-run the debate in background after user joins
         import threading
-        from services.persistence import load_debates
+        from datetime import datetime as _dt
+        from services.persistence import load_debates, try_claim_debate_for_run
         from services.llm import get_deepseek_client
         from services.debate_engine import (
             run_phase1_roundtable, run_phase2_reveal_bet,
@@ -55,12 +56,14 @@ def buy_opinion_shares(user_id: str, req: BuySharesRequest):
 
             def auto_run():
                 try:
-                    # Reload fresh copy to avoid stale closure and race conditions
-                    fresh = load_debates().get(debate_id)
-                    if not fresh or fresh.get("status") != "created":
+                    # Atomically claim the debate — exits immediately if another
+                    # thread already started it (prevents double-runs)
+                    debate = try_claim_debate_for_run(debate_id, _dt.now().isoformat())
+                    if debate is None:
+                        print(f"[AUTO-RUN] {debate_id} already claimed, skipping")
                         return
-                    debate = dict(fresh)
 
+                    print(f"[AUTO-RUN] Starting debate {debate_id}: {debate.get('title', '')[:40]}")
                     client = get_deepseek_client()
                     builtin_ids = {a["id"] for a in AGENT_PERSONALITIES}
                     agents = list(AGENT_PERSONALITIES)
@@ -75,9 +78,6 @@ def buy_opinion_shares(user_id: str, req: BuySharesRequest):
                                     f"\u4f60\u662f{ca['name']}\uff0c\u4e00\u4e2a\u8fa9\u8bba\u53c2\u4e0e\u8005\u3002\u8bf7\u7528\u4e2d\u6587\u53d1\u8868\u4f60\u7684\u89c2\u70b9\u3002"),
                             })
 
-                    from datetime import datetime as _dt
-                    debate["status"] = "running"
-                    debate["started_at"] = _dt.now().isoformat()
                     debate["phase"] = "\u5706\u684c\u8ba8\u8bba"
                     save_debate(debate)
 

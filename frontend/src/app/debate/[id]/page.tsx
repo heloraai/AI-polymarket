@@ -42,7 +42,7 @@ export default function DebateDetailPage({ params }: { params: Promise<{ id: str
   const [debate, setDebate] = useState<Debate | null>(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'roundtable' | 'bets' | 'ruling'>('roundtable');
-  const [running, setRunning] = useState(false);
+
   const [showPoster, setShowPoster] = useState(false);
   const [spectating, setSpectating] = useState(false);
   const [prevTranscriptLen, setPrevTranscriptLen] = useState(0);
@@ -197,22 +197,6 @@ export default function DebateDetailPage({ params }: { params: Promise<{ id: str
     return acc;
   }, {});
 
-  const handleRun = async () => {
-    setRunning(true);
-    try {
-      const res = await fetch(`/api/debates/${id}/run`, { method: 'POST' });
-      if (res.ok) {
-        window.location.reload();
-      } else {
-        const err = await res.json();
-        alert(err.error || '运行失败');
-      }
-    } catch {
-      alert('网络错误');
-    } finally {
-      setRunning(false);
-    }
-  };
 
   return (
     <div className="min-h-screen bg-[#F6F6F6]">

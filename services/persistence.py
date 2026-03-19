@@ -114,3 +114,22 @@ def save_wallet(wallet: dict) -> None:
         wallets = load_wallets()
         wallets[wallet["user_id"]] = wallet
         save_wallets(wallets)
+
+
+def try_claim_debate_for_run(debate_id: str, started_at: str) -> dict | None:
+    """Atomically claim a debate for running.
+
+    Checks status == 'created' and sets it to 'running' in a single
+    locked operation. Returns the debate dict (with status already set
+    to 'running') on success, or None if it was already claimed by
+    another thread.
+    """
+    with _debates_lock:
+        debates = load_debates()
+        debate = debates.get(debate_id)
+        if not debate or debate.get("status") != "created":
+            return None
+        debate = {**debate, "status": "running", "started_at": started_at}
+        debates[debate_id] = debate
+        save_debates(debates)
+        return debate
