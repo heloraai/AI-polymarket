@@ -33,7 +33,7 @@ export default function NetWorthBadge({ wallet, loading }: Props) {
         className="flex items-center gap-1.5 px-3 py-1.5 bg-[#FFF8E1] rounded-full hover:bg-[#FFE082] transition-colors"
       >
         <span className="text-sm">💰</span>
-        <span className="text-xs text-[#F57C00] font-medium">领取 1000 积分</span>
+        <span className="text-xs text-[#F57C00] font-medium">领取 200 积分</span>
       </button>
     );
   }
