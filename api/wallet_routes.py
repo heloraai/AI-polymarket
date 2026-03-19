@@ -49,10 +49,18 @@ def buy_opinion_shares(user_id: str, req: BuySharesRequest):
         from agents.personalities import AGENT_PERSONALITIES
 
         debates = load_debates()
-        debate = debates.get(req.debate_id)
-        if debate and debate.get("status") == "created":
+        debate_snapshot = debates.get(req.debate_id)
+        if debate_snapshot and debate_snapshot.get("status") == "created":
+            debate_id = req.debate_id
+
             def auto_run():
                 try:
+                    # Reload fresh copy to avoid stale closure and race conditions
+                    fresh = load_debates().get(debate_id)
+                    if not fresh or fresh.get("status") != "created":
+                        return
+                    debate = dict(fresh)
+
                     client = get_deepseek_client()
                     builtin_ids = {a["id"] for a in AGENT_PERSONALITIES}
                     agents = list(AGENT_PERSONALITIES)
@@ -67,7 +75,9 @@ def buy_opinion_shares(user_id: str, req: BuySharesRequest):
                                     f"\u4f60\u662f{ca['name']}\uff0c\u4e00\u4e2a\u8fa9\u8bba\u53c2\u4e0e\u8005\u3002\u8bf7\u7528\u4e2d\u6587\u53d1\u8868\u4f60\u7684\u89c2\u70b9\u3002"),
                             })
 
+                    from datetime import datetime as _dt
                     debate["status"] = "running"
+                    debate["started_at"] = _dt.now().isoformat()
                     debate["phase"] = "\u5706\u684c\u8ba8\u8bba"
                     save_debate(debate)
 
@@ -134,11 +144,16 @@ def buy_opinion_shares(user_id: str, req: BuySharesRequest):
                     except Exception as e:
                         print(f"[\u89c2\u70b9\u51fa\u5708] Failed: {e}")
 
-                    print(f"[AUTO-RUN] Debate {req.debate_id} completed: {judgment.get('winning_label')}")
+                    print(f"[AUTO-RUN] Debate {debate_id} completed: {judgment.get('winning_label')}")
                 except Exception as e:
                     print(f"[AUTO-RUN] Error: {e}")
-                    debate["status"] = "created"
-                    save_debate(debate)
+                    try:
+                        recover = load_debates().get(debate_id)
+                        if recover:
+                            recover = {**recover, "status": "created"}
+                            save_debate(recover)
+                    except Exception:
+                        pass
 
             t = threading.Thread(target=auto_run, daemon=True)
             t.start()

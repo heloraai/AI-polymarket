@@ -68,10 +68,10 @@ export async function GET(
         ? {
             reasoning: judgment.reasoning,
             option_analysis: judgment.option_analysis || {},
-            scores: judgment.scores,
+            scores: judgment.scores || {},
             mvp: judgment.mvp,
             mvp_reason: judgment.mvp_reason || '',
-            highlights: judgment.highlights,
+            highlights: judgment.highlights || [],
             data_sources: judgment.data_sources || [],
             total_pool: judgment.total_pool,
             loser_pool: judgment.loser_pool,

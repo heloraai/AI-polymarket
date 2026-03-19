@@ -50,10 +50,10 @@ function transformDebate(d: Record<string, unknown>): Record<string, unknown> {
       ? {
           reasoning: judgment.reasoning,
           option_analysis: judgment.option_analysis || {},
-          scores: judgment.scores,
+          scores: judgment.scores || {},
           mvp: judgment.mvp,
           mvp_reason: judgment.mvp_reason || '',
-          highlights: judgment.highlights,
+          highlights: judgment.highlights || [],
           data_sources: judgment.data_sources || [],
           total_pool: judgment.total_pool,
           loser_pool: judgment.loser_pool,
@@ -66,7 +66,7 @@ function transformDebate(d: Record<string, unknown>): Record<string, unknown> {
 
 export async function GET() {
   try {
-    const response = await fetch(`${BACKEND_URL}/api/debates`);
+    const response = await fetch(`${BACKEND_URL}/api/debates`, { cache: 'no-store' });
     if (!response.ok) {
       return NextResponse.json({ debates: [] });
     }
