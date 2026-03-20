@@ -84,9 +84,40 @@ def batch_status():
 
 @router.get("/debates")
 def list_debates():
-    """List all debates with full data."""
+    """List all debates (lightweight — no transcript/judgment body)."""
     debates = load_debates()
-    result = list(debates.values())
+    result = []
+    for d in debates.values():
+        bets = d.get("bets", [])
+        judgment = d.get("judgment")
+        result.append({
+            "id": d["id"],
+            "title": d.get("title", ""),
+            "options": d.get("options", []),
+            "context": d.get("context", ""),
+            "status": d.get("status", ""),
+            "phase": d.get("phase", ""),
+            "market_prices": d.get("market_prices", {}),
+            "created_at": d.get("created_at", ""),
+            "source": d.get("source", ""),
+            "agents": d.get("agents", []),
+            "transcript_count": len(d.get("transcript", [])),
+            "bets": [
+                {
+                    "agent_name": b.get("agent_name", ""),
+                    "agent_emoji": b.get("agent_emoji", ""),
+                    "chosen_label": b.get("chosen_label", ""),
+                    "bet_amount": b.get("bet_amount", 0),
+                    "confidence": b.get("confidence", 0),
+                }
+                for b in bets
+            ],
+            "judgment": {
+                "winning_label": judgment.get("winning_label", ""),
+                "mvp": judgment.get("mvp", ""),
+                "payouts": judgment.get("payouts", {}),
+            } if judgment else None,
+        })
     result.sort(key=lambda x: x.get("created_at", ""), reverse=True)
     return {"debates": result}
 

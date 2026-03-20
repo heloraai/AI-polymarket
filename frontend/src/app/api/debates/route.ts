@@ -8,15 +8,17 @@ const BACKEND_URL = process.env.BACKEND_URL || 'http://localhost:8000';
 function transformDebate(d: Record<string, unknown>): Record<string, unknown> {
   const options = (d.options as Array<{ key: string; label: string }>) || [];
   const bets = (d.bets as Array<Record<string, unknown>>) || [];
-  const transcript = (d.transcript as Array<Record<string, unknown>>) || [];
   const judgment = d.judgment as Record<string, unknown> | null;
   const payouts = (judgment?.payouts as Record<string, Record<string, unknown>>) || {};
+
+  // List endpoint sends transcript_count instead of full transcript
+  const transcript = (d.transcript as Array<Record<string, unknown>>) || [];
+  const transcriptCount = (d.transcript_count as number) ?? transcript.length;
 
   // Map status
   const rawStatus = d.status as string;
   let status = rawStatus;
   if (rawStatus === 'completed') status = 'finished';
-  // If stuck in running but has judgment, treat as finished
   if (rawStatus === 'running' && judgment) status = 'finished';
 
   return {
@@ -28,11 +30,14 @@ function transformDebate(d: Record<string, unknown>): Record<string, unknown> {
     status,
     phase: d.phase || '',
     result: judgment ? (judgment.winning_label as string) : null,
-    transcript: transcript.map((msg) => ({
-      agent: `${msg.agent_emoji || ''}${msg.agent_name || ''}`,
-      content: msg.content,
-      phase: msg.phase,
-    })),
+    // List view: build minimal transcript array with correct length
+    transcript: transcript.length > 0
+      ? transcript.map((msg) => ({
+          agent: `${msg.agent_emoji || ''}${msg.agent_name || ''}`,
+          content: msg.content,
+          phase: msg.phase,
+        }))
+      : Array.from({ length: transcriptCount }, () => ({ agent: '', content: '', phase: '' })),
     bets: bets.map((b, i) => {
       const name = b.agent_name as string;
       const payout = payouts[name] as Record<string, unknown> | undefined;
@@ -48,15 +53,8 @@ function transformDebate(d: Record<string, unknown>): Record<string, unknown> {
     }),
     judgment: judgment
       ? {
-          reasoning: judgment.reasoning,
-          option_analysis: judgment.option_analysis || {},
-          scores: judgment.scores || {},
           mvp: judgment.mvp,
-          mvp_reason: judgment.mvp_reason || '',
-          highlights: judgment.highlights || [],
-          data_sources: judgment.data_sources || [],
-          total_pool: judgment.total_pool,
-          loser_pool: judgment.loser_pool,
+          winning_label: judgment.winning_label,
           payouts,
         }
       : null,
@@ -66,7 +64,13 @@ function transformDebate(d: Record<string, unknown>): Record<string, unknown> {
 
 export async function GET() {
   try {
-    const response = await fetch(`${BACKEND_URL}/api/debates`, { cache: 'no-store' });
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 15000); // 15s timeout
+    const response = await fetch(`${BACKEND_URL}/api/debates`, {
+      cache: 'no-store',
+      signal: controller.signal,
+    });
+    clearTimeout(timeout);
     if (!response.ok) {
       return NextResponse.json({ debates: [] });
     }
