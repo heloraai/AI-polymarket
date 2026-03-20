@@ -25,9 +25,9 @@ _batch_lock = threading.Lock()
 _batch_running = False
 _next_batch_time: Optional[str] = None
 
-MIN_AVAILABLE_DEBATES = 10
-INITIAL_BATCH_SIZE = 50   # 启动时拉50条
-HOURLY_BATCH_SIZE = 30    # 每小时补30条
+MIN_AVAILABLE_DEBATES = 50   # 热榜保持至少50条
+INITIAL_BATCH_SIZE = 100     # 启动时拉100条
+HOURLY_BATCH_SIZE = 50       # 每小时补50条
 
 
 def batch_running() -> bool:
@@ -55,7 +55,7 @@ def _ensure_available_debates(client, max_create: int = 20) -> int:
 
     used_topics = load_used_topics()
 
-    topics = fetch_hotlist_for_debates(count=100)
+    topics = fetch_hotlist_for_debates(count=200)
     if not topics:
         print("[BATCH] No hotlist topics fetched")
         return 0
