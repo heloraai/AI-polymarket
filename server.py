@@ -5,6 +5,8 @@
 
 import shutil
 import threading
+import uuid
+from datetime import datetime
 from pathlib import Path
 
 from fastapi import FastAPI
@@ -51,6 +53,42 @@ def startup_event():
             if not target.exists():
                 shutil.copy2(seed_file, target)
                 print(f"[观点交易所] 从 seed 初始化: {seed_file.name}")
+
+    # 从已完成辩论回收出热榜内容（不需要 LLM，秒级完成）
+    from services.persistence import load_debates, save_debates
+    from services.pricing import calculate_option_prices
+    debates = load_debates()
+    created_count = sum(1 for d in debates.values() if d.get("status") == "created")
+    if created_count < 50:
+        completed = [d for d in debates.values() if d.get("status") == "completed"]
+        for old in completed[:60]:
+            new_id = uuid.uuid4().hex[:8]
+            options = old.get("options", [])
+            option_keys = [o["key"] for o in options]
+            debates[new_id] = {
+                "id": new_id,
+                "title": old["title"],
+                "options": options,
+                "context": old.get("context", ""),
+                "category": old.get("category", "zhihu_hotlist"),
+                "status": "created",
+                "phase": "",
+                "agents": [
+                    {"id": a["id"], "name": a["name"], "emoji": a["emoji"], "description": a["description"]}
+                    for a in old.get("agents", []) if not a.get("is_user_agent")
+                ],
+                "transcript": [],
+                "bets": [],
+                "market_prices": calculate_option_prices(option_keys, [], seed=old["title"]),
+                "team_defense_messages": [],
+                "judgment": None,
+                "payouts": None,
+                "created_at": datetime.now().isoformat(),
+                "source": "recycled",
+            }
+        save_debates(debates)
+        recycled = sum(1 for d in debates.values() if d.get("status") == "created") - created_count
+        print(f"[观点交易所] 回收 {recycled} 条已完成辩论到热榜")
 
     t = threading.Thread(target=schedule_batch_loop, daemon=True)
     t.start()
