@@ -61,7 +61,59 @@ def startup_event():
     created_count = sum(1 for d in debates.values() if d.get("status") == "created")
     if created_count < 50:
         completed = [d for d in debates.values() if d.get("status") == "completed"]
-        for old in completed[:60]:
+
+        # ── 过滤政治敏感话题 ──
+        sensitive_keywords = [
+            "特朗普", "拜登", "习近平", "普京", "泽连斯基",
+            "台湾", "台海", "统一", "独立",
+            "伊朗", "北约", "俄乌", "俄罗斯", "乌克兰",
+            "美军", "战争", "袭击", "革命", "政权",
+            "共产", "民主党", "共和党",
+            "新疆", "西藏", "香港",
+            "制裁", "核武", "导弹",
+        ]
+        completed = [
+            d for d in completed
+            if not any(kw in d.get("title", "") for kw in sensitive_keywords)
+        ]
+
+        # ── 按原辩论参与度排序（下注总额高 = 话题更有价值） ──
+        completed.sort(
+            key=lambda d: sum(b.get("bet_amount", 0) for b in d.get("bets", [])),
+            reverse=True,
+        )
+
+        # ── 话题打散：按关键词聚类，同类不连续出现 ──
+        topic_tags = {
+            "国际": ["伊朗", "特朗普", "美国", "北约", "俄", "乌克兰", "日本", "韩"],
+            "体育": ["NBA", "赛季", "世界杯", "奥运", "湖人", "马刺"],
+            "科技": ["AI", "人工智能", "大模型", "芯片", "小米", "苹果", "特斯拉"],
+            "娱乐": ["漫画", "电影", "剧", "游戏", "CS", "奥斯卡"],
+            "财经": ["股", "基金", "房价", "油价", "降息", "LPR", "美元"],
+        }
+
+        def _get_tag(title: str) -> str:
+            for tag, keywords in topic_tags.items():
+                if any(kw in title for kw in keywords):
+                    return tag
+            return "其他"
+
+        # 按 tag 分桶
+        buckets: dict[str, list] = {}
+        for d in completed:
+            tag = _get_tag(d.get("title", ""))
+            buckets.setdefault(tag, []).append(d)
+
+        # 交错合并：每轮从各桶取一条，保证同类话题不连续
+        interleaved: list[dict] = []
+        while any(buckets.values()):
+            for tag in list(buckets.keys()):
+                if buckets[tag]:
+                    interleaved.append(buckets[tag].pop(0))
+                else:
+                    del buckets[tag]
+
+        for old in interleaved[:60]:
             new_id = uuid.uuid4().hex[:8]
             options = old.get("options", [])
             option_keys = [o["key"] for o in options]
@@ -88,7 +140,7 @@ def startup_event():
             }
         save_debates(debates)
         recycled = sum(1 for d in debates.values() if d.get("status") == "created") - created_count
-        print(f"[观点交易所] 回收 {recycled} 条已完成辩论到热榜")
+        print(f"[观点交易所] 回收 {recycled} 条已完成辩论到热榜（按参与度排序+话题打散）")
 
     t = threading.Thread(target=schedule_batch_loop, daemon=True)
     t.start()

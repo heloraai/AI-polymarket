@@ -60,6 +60,16 @@ def _ensure_available_debates(client, max_create: int = 20) -> int:
         print("[BATCH] No hotlist topics fetched")
         return 0
 
+    sensitive_keywords = [
+        "特朗普", "拜登", "习近平", "普京", "泽连斯基",
+        "台湾", "台海", "统一", "独立",
+        "伊朗", "北约", "俄乌", "俄罗斯", "乌克兰",
+        "美军", "战争", "袭击", "革命", "政权",
+        "共产", "民主党", "共和党",
+        "新疆", "西藏", "香港",
+        "制裁", "核武", "导弹",
+    ]
+
     created = 0
     for topic in topics:
         if created >= need:
@@ -67,6 +77,8 @@ def _ensure_available_debates(client, max_create: int = 20) -> int:
 
         title = topic["title"]
         if title.strip() in used_topics:
+            continue
+        if any(kw in title for kw in sensitive_keywords):
             continue
 
         try:
@@ -138,10 +150,13 @@ def run_batch_debates():
 
 
 def schedule_batch_loop():
-    """启动时立即拉热榜，然后定时循环。"""
+    """启动后延迟建题（先让 API 可用），然后定时循环。"""
     global _next_batch_time
 
-    # 启动时立即拉50条
+    # 启动后等30秒再建题，让 API 先能响应（不阻塞首屏加载）
+    print("[BATCH] Server ready — will start creating debates in 30s...")
+    time.sleep(30)
+
     try:
         print(f"[BATCH] Startup: creating {INITIAL_BATCH_SIZE} debates...")
         client = get_deepseek_client()
